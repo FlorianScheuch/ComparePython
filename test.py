@@ -5,7 +5,6 @@ from Utils import *
 
 MAX_NUMBER = 24000
 
-
 numberOfGoodNonBadByDeltaRPileUp = ROOT.TH1D ("numberOfGoodNonBadByDeltaRPileUp", "numberOfGoodNonBadByDeltaRPileUp", 100, -.005, .995)
 numberOfNonGoodBadByDeltaRPileUp = ROOT.TH1D ("numberOfNonGoodBadByDeltaRPileUp", "numberOfNonGoodBadByDeltaRPileUp", 100, -.005, .995)
 numberOfNonGoodNonBadByDeltaRPileUp = ROOT.TH1D ("numberOfNonGoodNonBadByDeltaRPileUp", "numberOfNonGoodNonBadByDeltaRPileUp", 100, -.005, .995)
@@ -17,14 +16,8 @@ numberOfNonGoodNonBadByDeltaRPileUpGen = ROOT.TH1D ("numberOfNonGoodNonBadByDelt
 numberOfGoodBadByDeltaRPileUpGen = ROOT.TH1D ("numberOfGoodBadByDeltaRPileUpGen", "numberOfGoodBadByDeltaRPileUpGen", 100, -.005, .995)
 
 deltaZ = ROOT.TH1D("Delta z position", "Delta z position", 100, -1, 1)
-#hoActivityPlot = []
-#for i in xrange(MAX_NUMBER):
-#    plot = ROOT.TH2F( "HO Event Display " + str(i), "HO Event Display " + str(i), 31, -15.5, 15.5, 72, .5, 72.5)
-#    hoActivityPlot.append(plot)
-
 eventsBad = Events ('FEVT_NonWorkingDetector20.root')
 eventsGood = Events ('FEVT_WorkingDetector.root')
-
 
 # create handle outside of loop
 genParticlesHandle  = Handle ('std::vector<reco::GenParticle>')
@@ -43,11 +36,11 @@ labelHoEntries = ("horeco")
 labelPhiContainer = ("dttfDigis")
 labelGenParticles = ("genParticles")
 
-    #print Utils.getEta(4.02, 6.61) #Straight line from center to end of station 1 in wheel 2
-    #print Utils.getEta(7.38, 6.61) #Straight line from center to end of station 4 in wheel 2
-    #print Utils.getEta(4.02, 3.954) #Straight line from center to end of station 1 wheel 1
-    #print Utils.getEta(4.02, 1.268) #Straight line from center to end of station 1 in wheel 0
-    #print 2**.5*math.pi/36
+#print Utils.getEta(4.02, 6.61) #Straight line from center to end of station 1 in wheel 2
+#print Utils.getEta(7.38, 6.61) #Straight line from center to end of station 4 in wheel 2
+#print Utils.getEta(4.02, 3.954) #Straight line from center to end of station 1 wheel 1
+#print Utils.getEta(4.02, 1.268) #Straight line from center to end of station 1 in wheel 0
+#print 2**.5*math.pi/36
 
 def save(name, *plot):
     file = ROOT.TFile(name, 'RECREATE')
@@ -67,14 +60,7 @@ def analyze(deltaR, relPt):
     ROOT.gROOT.SetStyle('Plain') # white background
     
     
-    ################
-    ################
-    ################
     ##    PLOTS   ##
-    ################
-    ################
-    ################
-    
     # Only RECO working / L1 working
     allRecoMuonsPt = ROOT.TH1D ("Pt of all RECO muons", "Pt of all RECO muons", 1000, 0, 100)
     allRecoMuons = ROOT.TH2D("Eta phi of all RECO muons / good detector", "Eta phi of all RECO muons / good detector", 30, -1.*Utils.getEta(4.02, 6.61), Utils.getEta(4.02, 6.61), 72, -1*math.pi, math.pi)
@@ -108,12 +94,7 @@ def analyze(deltaR, relPt):
     YGoodNBadPtGen = ROOT.TH1D ("YGNB Pt Gen", "YGNB Pt Gen", 1000, 0, 100)
     NGoodNBadPtGen = ROOT.TH1D ("NGNB Pt Gen", "NGNB Pt Gen", 1000, 0, 100)
     
-    
-    ##############
-    ##############
     ### COUNTER ##
-    ##############
-    ##############
     
     numberOfAdditionals = 0
     numberOfHighHOEntries = 0
@@ -156,23 +137,13 @@ def analyze(deltaR, relPt):
         phiContainer = phiContainerHandle.product()
         #----- END GET THE HANDLES -----
     
-        #----- WRITE MAP OF HO ENTRIES -----
-    
-       # for k in xrange(len(badHoEntries)):
-       #     bg = badHoEntries.__getitem__(k)
-       #     detId = bg.id()
-       #     hoActivityPlot[i].Fill(detId.ieta(), detId.iphi(), bg.energy())
-        
-    
-        #----- END WRITE MAP OF HO ENTRIES -----
-    
         l1MuonTuple = []
         
         recoMuon = 0
         matchingBadMuon = 1
         matchingGoodMuon = 2
         
-        matchedToGenRecoMuon = Utils.getMatch(genParticles[0], goodRecoMuons, deltaR, relPt)
+        matchedToGenRecoMuon = Utils.getMatch(genParticles[0], goodRecoMuons, .1, .7)
         #print matchedToGenRecoMuon, " Matched to"
         
         for element in goodRecoMuons:
@@ -226,10 +197,13 @@ def analyze(deltaR, relPt):
             if element[matchingBadMuon] == None:
                 if element[matchingGoodMuon] == None:
                     NGoodNBadPt.Fill(element[recoMuon].pt())
-                    numberOfNonGoodNonBad = numberOfNonGoodNonBad + 1
+                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
+                        numberOfNonGoodNonBadGen = numberOfNonGoodNonBadGen + 1
+                    else:
+                        numberOfNonGoodNonBad = numberOfNonGoodNonBad + 1
                 else:
                     YGoodNBadPt.Fill(element[recoMuon].pt())
-                    if element[matchingGoodMuon] is matchedToGenRecoMuon:
+                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
                         numberOfGoodNonBadGen = numberOfGoodNonBadGen + 1
                     else:
                         numberOfGoodNonBad = numberOfGoodNonBad + 1
@@ -237,13 +211,13 @@ def analyze(deltaR, relPt):
                 if element[matchingGoodMuon] == None:
                     #print i
                     NGoodYBadPt.Fill(element[recoMuon].pt())
-                    if element[matchingGoodMuon] is matchedToGenRecoMuon:
+                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
                         numberOfNonGoodBadGen = numberOfNonGoodBadGen + 1
                     else:
                         numberOfNonGoodBad = numberOfNonGoodBad + 1
                 else:
                     YGoodYBadPt.Fill(element[recoMuon].pt())
-                    if element[matchingGoodMuon] is matchedToGenRecoMuon:
+                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
                         numberOfGoodBadGen = numberOfGoodBadGen + 1
                     else:
                         numberOfGoodBad = numberOfGoodBad + 1
@@ -338,8 +312,6 @@ def analyze(deltaR, relPt):
     temp1.Divide(allWorkingRecoMuons)
     temp1.Draw('colz')
     
-
-    
     ###### CALCULATE VALUES
     sumEntries = 0
     sumMean = 0
@@ -379,54 +351,11 @@ def analyze(deltaR, relPt):
     numberOfNonGoodBadByDeltaRPileUpGen.SetBinContent(numberOfNonGoodBadByDeltaRPileUpGen.FindBin(deltaR), numberOfNonGoodBadGen*1./sumOfAll)
     numberOfGoodBadByDeltaRPileUpGen.SetBinContent(numberOfGoodBadByDeltaRPileUpGen.FindBin(deltaR), numberOfGoodBadGen*1./sumOfAll)
     numberOfNonGoodNonBadByDeltaRPileUpGen.SetBinContent(numberOfNonGoodNonBadByDeltaRPileUpGen.FindBin(deltaR), numberOfNonGoodNonBadGen*1./sumOfAll)
-    #    break
-        
-    #    if not badRecoMuons.size() == goodRecoMuons.size():
-    #        print "bad ",badRecoMuons.size(),"   good ", goodRecoMuons.size()
-            #break
-    
-analyze(.3, .5)
 
-#for i in xrange(100):
-#    analyze(i*0.01)
 
-save('Data.root', deltaZ)
+
+for i in xrange(100):
+    analyze(i*0.01, .5)
+
+#save('Data.root', deltaZ)
 save('OverallData.root', numberOfGoodNonBadByDeltaRPileUp, numberOfNonGoodBadByDeltaRPileUp, numberOfGoodBadByDeltaRPileUp, numberOfNonGoodNonBadByDeltaRPileUp, numberOfGoodNonBadByDeltaRPileUpGen, numberOfNonGoodBadByDeltaRPileUpGen, numberOfGoodBadByDeltaRPileUpGen, numberOfNonGoodNonBadByDeltaRPileUpGen)
-#file = ROOT.TFile('Data.root', 'RECREATE')
-# allNonWorkingRecoMuonsGood.Write()
-# allNonWorkingRecoMuonsBad.Write()
-# efficiencyEtaPhiDiff.Write()
-# allRecoMuons.Write()
-# relAllRecoMuons.Write()
-# allWorkingRecoMuons.Write()
-# relAllWorkingRecoMuons.Write()#
-# diffFailsEtaPhi.Write()
-# temp1.Write()
-# hoEntryPlot.Write()
-# hoEntryPlot3Phi.Write()
-# allRecoMuonsPt.Write()
-# allNonWorkingRecoMuonsGoodPt.Write()
-# allNonWorkingRecoMuonsBadPt.Write()
-# allWorkingRecoMuonsPt.Write()
-# YGoodYBadPt.Write()
-# NGoodYBadPt.Write()
-# YGoodNBadPt.Write()
-# NGoodNBadPt.Write()
-#deltaZ.Write()
-# diffGhostsEtaPhi.Write()
-#for i in xrange(MAX_NUMBER):
-#     hoActivityPlot[i].Write()
-#file.Close()
-
-
-#file = ROOT.TFile('OverallData.root', 'RECREATE')
-#numberOfGoodNonBadByDeltaRPileUp.Write()
-#numberOfNonGoodBadByDeltaRPileUp.Write()
-#numberOfGoodBadByDeltaRPileUp.Write()
-#numberOfNonGoodNonBadByDeltaRPileUp.Write()
-
-#numberOfGoodNonBadByDeltaRPileUpGen.Write()
-#numberOfNonGoodBadByDeltaRPileUpGen.Write()
-#numberOfGoodBadByDeltaRPileUpGen.Write()
-#numberOfNonGoodNonBadByDeltaRPileUpGen.Write()
-#file.Close()

@@ -39,6 +39,18 @@ class Utils:
         return False
     
     @staticmethod
+    def isSame(muon1, muon2):
+        if muon1 == None:
+            return False
+        if muon2 == None:
+            return False
+        if(muon1.pt() == muon2.pt()):
+            if(muon1.phi() == muon2.phi()):
+                if(muon1.eta() == muon2.eta()):
+                    return True
+        return False
+    
+    @staticmethod
     def translateToIEta(eta):
         val = eta/(2*math.pi/72)
         val = int(val)
