@@ -16,7 +16,7 @@ numberOfNonGoodNonBadByDeltaRPileUpGen = ROOT.TH1D ("numberOfNonGoodNonBadByDelt
 numberOfGoodBadByDeltaRPileUpGen = ROOT.TH1D ("numberOfGoodBadByDeltaRPileUpGen", "numberOfGoodBadByDeltaRPileUpGen", 100, -.005, .995)
 
 deltaZ = ROOT.TH1D("Delta z position", "Delta z position", 100, -1, 1)
-eventsBad = Events ('FEVT_NonWorkingDetector20.root')
+eventsBad = Events ('FEVT_NonWorkingDetector.root') #sample with dead MB1
 eventsGood = Events ('FEVT_WorkingDetector.root')
 
 # create handle outside of loop
@@ -27,6 +27,7 @@ badL1MuonsHandle = Handle('std::vector<l1extra::L1MuonParticle>')
 goodL1MuonsHandle = Handle('std::vector<l1extra::L1MuonParticle>')
 hoEntriesHandle = Handle('edm::SortedCollection<HORecHit,edm::StrictWeakOrdering<HORecHit>>')
 phiContainerHandle = Handle('L1MuDTChambPhContainer')
+thContainerHandle = Handle('L1MuDTChambThContainer')
 #phiContainerHandle = Handle('L1MuDTChambPhContainer')
 # a label is just a tuple of strings that is initialized justvector<reco::GenParticle>
 # like and edm::InputTag
@@ -34,6 +35,7 @@ label = ("muons")
 labelL1 = ("l1extraParticles")
 labelHoEntries = ("horeco")
 labelPhiContainer = ("dttfDigis")
+labelThContainer = ("dttfDigis")
 labelGenParticles = ("genParticles")
 
 #print Utils.getEta(4.02, 6.61) #Straight line from center to end of station 1 in wheel 2
@@ -47,6 +49,20 @@ def save(name, *plot):
     for x in plot:
         x.Write()
     file.Close()
+
+def printDigis(phDigi, thDigi):
+    for d in phDigi:
+        if d.stNum() == 2:
+            print 'Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+    for d in thDigi:
+        if d.stNum() == 2:
+            for pos in xrange(8):
+                if d.position(pos) > 0:
+                    print 'Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' pos: ', pos
+
+def getMuonCandidates(phDigi, thDigi):
+    
+def getMuonCandidates(phDigi):
 
 def analyze(deltaR, relPt):
     # deltaR: DeltaR of the matching cone
@@ -136,12 +152,24 @@ def analyze(deltaR, relPt):
         badEvent.getByLabel(labelPhiContainer, phiContainerHandle)
         phiContainer = phiContainerHandle.product()
         #----- END GET THE HANDLES -----
-    
+        badEvent.getByLabel(labelPhiContainer, phiContainerHandle)
+        phiContainer = phiContainerHandle.product()
+        #----- END GET THE HANDLES -----
+        phiDigis = phiContainer.getContainer()
+        
+        
+        badEvent.getByLabel(labelThContainer, thContainerHandle)
+        thContainer = thContainerHandle.product()
+        #----- END GET THE HANDLES -----
+        thDigis = thContainer.getContainer()
+        
+        
+        
         l1MuonTuple = []
         
         recoMuon = 0
-        matchingBadMuon = 1
-        matchingGoodMuon = 2
+        matchingBadMuon = 1 #L1Muon
+        matchingGoodMuon = 2 #L1Muon
         
         matchedToGenRecoMuon = Utils.getMatch(genParticles[0], goodRecoMuons, .1, .7)
         #print matchedToGenRecoMuon, " Matched to"
@@ -165,6 +193,10 @@ def analyze(deltaR, relPt):
                 allWorkingRecoMuonsPt.Fill(element[recoMuon].pt())
                 allWorkingRecoMuons.Fill(element[recoMuon].eta(), element[recoMuon].phi())
                 if element[matchingBadMuon] == None:
+                    printDigis(phiDigis, thDigis)
+                    print 'RECO (gen), pT: ', element[recoMuon].pt(), ' eta: ', element[recoMuon].eta(), 'phi ', element[recoMuon].phi()
+                    print ' '
+                    
                     # Here we have the muons that are detected in L1 for the working detector, but are not detected in the non working detector anymore
                     # element[recoMuon] is the corresponding RECO muon (meaning the 'GEN' muon)
                     numberOfAdditionals = numberOfAdditionals + 1
@@ -354,8 +386,8 @@ def analyze(deltaR, relPt):
 
 
 
-for i in xrange(100):
-    analyze(.2, i*0.01)
+#for i in xrange(100):
+analyze(.2, .5)
 
 #save('Data.root', deltaZ)
 save('OverallData.root', numberOfGoodNonBadByDeltaRPileUp, numberOfNonGoodBadByDeltaRPileUp, numberOfGoodBadByDeltaRPileUp, numberOfNonGoodNonBadByDeltaRPileUp, numberOfGoodNonBadByDeltaRPileUpGen, numberOfNonGoodBadByDeltaRPileUpGen, numberOfGoodBadByDeltaRPileUpGen, numberOfNonGoodNonBadByDeltaRPileUpGen)
