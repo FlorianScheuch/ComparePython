@@ -329,7 +329,7 @@ def analyze(deltaR, relPt):
     #print 'Anzahl der hohen HO entries bei fehlendem L1: ', numberOfHighHOEntries
     #print 'Anzahl der hohen HO entries bei fehlendem L1 in 3 phi: ', numberOfHighHOEntries3Phi
     
-    print deltaR
+    print relPt
     print 'numberOfNonGoodNonBad ', numberOfNonGoodNonBad
     print 'numberOfNonGoodBad ', numberOfNonGoodBad
     print 'numberOfGoodNonBad ', numberOfGoodNonBad
@@ -342,20 +342,20 @@ def analyze(deltaR, relPt):
     
     sumOfAll = numberOfNonGoodNonBad + numberOfNonGoodNonBadGen + numberOfNonGoodBad + numberOfNonGoodBadGen + numberOfGoodNonBad + numberOfGoodNonBadGen + numberOfGoodBad + numberOfGoodBadGen
     
-    numberOfGoodNonBadByDeltaRPileUp.SetBinContent(numberOfGoodNonBadByDeltaRPileUp.FindBin(deltaR), numberOfGoodNonBad*1./sumOfAll)
-    numberOfNonGoodBadByDeltaRPileUp.SetBinContent(numberOfNonGoodBadByDeltaRPileUp.FindBin(deltaR), numberOfNonGoodBad*1./sumOfAll)
-    numberOfGoodBadByDeltaRPileUp.SetBinContent(numberOfGoodBadByDeltaRPileUp.FindBin(deltaR), numberOfGoodBad*1./sumOfAll)
-    numberOfNonGoodNonBadByDeltaRPileUp.SetBinContent(numberOfNonGoodNonBadByDeltaRPileUp.FindBin(deltaR), numberOfNonGoodNonBad*1./sumOfAll)
+    numberOfGoodNonBadByDeltaRPileUp.SetBinContent(numberOfGoodNonBadByDeltaRPileUp.FindBin(relPt), numberOfGoodNonBad*1./sumOfAll)
+    numberOfNonGoodBadByDeltaRPileUp.SetBinContent(numberOfNonGoodBadByDeltaRPileUp.FindBin(relPt), numberOfNonGoodBad*1./sumOfAll)
+    numberOfGoodBadByDeltaRPileUp.SetBinContent(numberOfGoodBadByDeltaRPileUp.FindBin(relPt), numberOfGoodBad*1./sumOfAll)
+    numberOfNonGoodNonBadByDeltaRPileUp.SetBinContent(numberOfNonGoodNonBadByDeltaRPileUp.FindBin(relPt), numberOfNonGoodNonBad*1./sumOfAll)
    
-    numberOfGoodNonBadByDeltaRPileUpGen.SetBinContent(numberOfGoodNonBadByDeltaRPileUpGen.FindBin(deltaR), numberOfGoodNonBadGen*1./sumOfAll)
-    numberOfNonGoodBadByDeltaRPileUpGen.SetBinContent(numberOfNonGoodBadByDeltaRPileUpGen.FindBin(deltaR), numberOfNonGoodBadGen*1./sumOfAll)
-    numberOfGoodBadByDeltaRPileUpGen.SetBinContent(numberOfGoodBadByDeltaRPileUpGen.FindBin(deltaR), numberOfGoodBadGen*1./sumOfAll)
-    numberOfNonGoodNonBadByDeltaRPileUpGen.SetBinContent(numberOfNonGoodNonBadByDeltaRPileUpGen.FindBin(deltaR), numberOfNonGoodNonBadGen*1./sumOfAll)
+    numberOfGoodNonBadByDeltaRPileUpGen.SetBinContent(numberOfGoodNonBadByDeltaRPileUpGen.FindBin(relPt), numberOfGoodNonBadGen*1./sumOfAll)
+    numberOfNonGoodBadByDeltaRPileUpGen.SetBinContent(numberOfNonGoodBadByDeltaRPileUpGen.FindBin(relPt), numberOfNonGoodBadGen*1./sumOfAll)
+    numberOfGoodBadByDeltaRPileUpGen.SetBinContent(numberOfGoodBadByDeltaRPileUpGen.FindBin(relPt), numberOfGoodBadGen*1./sumOfAll)
+    numberOfNonGoodNonBadByDeltaRPileUpGen.SetBinContent(numberOfNonGoodNonBadByDeltaRPileUpGen.FindBin(relPt), numberOfNonGoodNonBadGen*1./sumOfAll)
 
 
 
 for i in xrange(100):
-    analyze(i*0.01, .5)
+    analyze(.2, i*0.01)
 
 #save('Data.root', deltaZ)
 save('OverallData.root', numberOfGoodNonBadByDeltaRPileUp, numberOfNonGoodBadByDeltaRPileUp, numberOfGoodBadByDeltaRPileUp, numberOfNonGoodNonBadByDeltaRPileUp, numberOfGoodNonBadByDeltaRPileUpGen, numberOfNonGoodBadByDeltaRPileUpGen, numberOfGoodBadByDeltaRPileUpGen, numberOfNonGoodNonBadByDeltaRPileUpGen)
