@@ -60,9 +60,37 @@ def printDigis(phDigi, thDigi):
                 if d.position(pos) > 0:
                     print 'Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' pos: ', pos
 
-def getMuonCandidates(phDigi, thDigi):
+def machtesHOinPhi(phDigi, hoEntries):
+    # Checks if phDigi matches to an ok HO entry
     
-def getMuonCandidates(phDigi):
+def machtesHOinEta(thDigi, hoEntries):
+    # Checks if thDigi matches to an ok HO entry
+
+def getPtFromDigi(phDigi, stNum):
+    # Return pT from digi
+    
+def getPhiFromDigi(phDigi, stNum):
+    # Return phi from digi
+    
+def getEtaFromDigi(thDigi, stNum):
+
+def getMuonCandidates(phDigi, thDigi):
+    candidates = []
+    # look for phi and theta and match to phi eta tile of ho. add to list of candidates if ho gives signal
+    for dP in phDigi:
+        if matchesHOinPhi(dP, hoEntries):
+            for dT in thDigi:
+                if dP.stNum() == dT.stNum() and dP.scNum() == dT.scNum() and dP.whNum() == dT.whNum():
+                    # Here we have high quality and check for HO in eta and phi
+                    if matchesHOinEta(dT, hoEntries):
+                        
+                        # Create HQ HO muon status 0
+                    else
+                        # Create LQ HO muon status 1
+                else
+                # Here we have low quality. No matching entry in DT for eta. LQ HO Muon status 2
+
+
 
 def analyze(deltaR, relPt):
     # deltaR: DeltaR of the matching cone
