@@ -108,9 +108,9 @@ class Utils:
         dir = phi/4096.*180./math.pi
         
         if sec < 6:
-            dir = dir + (sec-1)*30
+            dir = dir + (sec-1)*28
         else:
-            dir = dir + (sec-13)*30
+            dir = dir + (sec-13)*28
         #print 'pos, dir: ', dir, ' wh: ', wh, 'sec: ', sec, ' phi: ', phi
         return dir
     
@@ -119,7 +119,7 @@ class Utils:
 #        return trig.phi()
         phi = trig.phi()/4096.
         phiB = trig.phiB()/512.
-        a = .1
+        a = 1.05
         l = 3.85
         b = l-a
         
@@ -128,12 +128,11 @@ class Utils:
         try:
             radPhi = math.atan((r*math.cos(math.asin(-1.*a/r-math.sin(phi+phiB)))+l*math.tan(phi)-r*math.cos(phi+phiB))/b)
             
-            print phi, ' ', radPhi
+            #print phi, ' ', radPhi
         
 
             return radPhi*4096.
         except:
-            print 'EXCEEEEPPPPTTTT'
             newPhi = math.atan((l*math.tan(phi) - a*math.tan(phi+phiB))/b)
             return newPhi*4096.
     
@@ -150,17 +149,17 @@ class Utils:
         if station == 1:
             if phiB > 0:
                 pT = var0Pos/(phiB-var2Pos) - var1Pos
-                print 'Positive'
-                print 'pT: ' , pT
+                #print 'Positive'
+                #print 'pT: ' , pT
                 rad = 3.33*pT/1.
-                print 'rad: ', rad
+                #print 'rad: ', rad
                 return rad
             else:
                 pT = var0Neg/(phiB-var2Neg) - var1Neg
-                print 'Negative'
-                print 'pT: ' , pT
+                #print 'Negative'
+                #print 'pT: ' , pT
                 rad = 3.33*pT/1.
-                print 'rad: ', rad
+                #print 'rad: ', rad
                 return rad
         else:
             return -1
@@ -174,13 +173,14 @@ class Utils:
         
         phi = Utils.getNewAngle(trig)
         
+        #dir = (phi/4096.)*180./math.pi
         dir = (phiB/512.+phi/4096.)*180./math.pi
         
 
         if sec < 6:
-            dir = dir + (sec-1)*30
+            dir = dir + (sec-1)*28
         else:
-            dir = dir + (sec-1)*30
+            dir = dir + (sec-1)*28
             
         #if wh>0 or (wh == 0 and sec%4>1):
         #    dir = -dir

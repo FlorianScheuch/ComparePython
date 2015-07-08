@@ -60,20 +60,75 @@ def printDigis(phDigi, thDigi):
                 if d.position(pos) > 0:
                     print 'Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' pos: ', pos
 
-def machtesHOinPhi(phDigi, hoEntries):
+def machtesHO(phDigi, thDigi, hoEntries):
+    # Do correction if possible here
+    phi = phDigi.phi()/2048.
+    if phi > -10 and phi <= -5:
+        iphi = 71
+    if phi > -5 and phi <= 0:
+        iphi = 72
+    if phi > 0 and phi <= 5:
+        iphi = 1
+    if phi > 5 and phi <= 10:
+        iphi = 2
+    if phi > 10 and phi <= 15:
+        iphi = 3
+    if phi > 15 and phi <= 20:
+        iphi = 4
+        
+        ieta = -20 #array machen
+     for pos in xrange(8):
+         if d.code(pos) > 0:
+             if d.whNum() == 0 and d.scNum() == 1 and d.stNum() == 2:
+                 ieta = pos - 3
+
+    for i in range(hoEntries.size()):
+        bg = hoEntries.__getitem__(i)
+        if bg.energy() > .2:
+            detId = bg.id()
+            if detId.iphi() == iphi:
+                testEta = detId.ieta()
+                if testEta < 0:
+                    testEta = testEta+1
+                if testEta == ieta:
+                    return True
+                if testEta == ieta - 1:
+                    return True
+                if testEta == ieta + 1:
+                    return True
+    return False
+
+    # Falls ieta == -20, dann gibt es keinen eta eintrag
+    # Falls vorhanden gucke in iphi und ieta im intervall 3 nach einem eintrag ueber threshold
+    # Falls nicht, gucke in iphi und komplett eta
     # Checks if phDigi matches to an ok HO entry
     
-def machtesHOinEta(thDigi, hoEntries):
-    # Checks if thDigi matches to an ok HO entry
-
 def getPtFromDigi(phDigi, stNum):
     # Return pT from digi
+    # Use fit parameters from Dropbox/Promotion/CMS/Analyse/DTAngle/Script.c
+    if stNum==2 :
+        p0 = 8.00605e-1
+        p1 = 1.84458
+        p2 = 1.71943e-2
+        n0 = -7.91097e-1
+        n1 = 1.89551
+        n2 = -1.75413e-2
+    else:
+        return 0
+    phiB = phDigi.phiB()/512.
+    if phiB < 0:
+        return n0/(phiB-n2)+n1
+    else:
+        return p0/(phiB-p2)+p1
+    
     
 def getPhiFromDigi(phDigi, stNum):
     # Return phi from digi
     
 def getEtaFromDigi(thDigi, stNum):
-
+    # Return eta from digi
+    # (give eta at the middle of station if no eta available)
+    
 def getMuonCandidates(phDigi, thDigi):
     candidates = []
     # look for phi and theta and match to phi eta tile of ho. add to list of candidates if ho gives signal
@@ -83,12 +138,13 @@ def getMuonCandidates(phDigi, thDigi):
                 if dP.stNum() == dT.stNum() and dP.scNum() == dT.scNum() and dP.whNum() == dT.whNum():
                     # Here we have high quality and check for HO in eta and phi
                     if matchesHOinEta(dT, hoEntries):
-                        
-                        # Create HQ HO muon status 0
+                        # Create HQ HO muon status 10
                     else
-                        # Create LQ HO muon status 1
+                        # Create LQ HO muon status 5
+                        # Check whole slice -> quality 7
                 else
-                # Here we have low quality. No matching entry in DT for eta. LQ HO Muon status 2
+                # Here we have low quality. No matching entry in DT for eta. LQ HO Muon status 1
+                # possibly check for whole eta slice -> think schould be done! quality 7
 
 
 
