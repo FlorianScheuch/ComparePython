@@ -16,7 +16,7 @@ numberOfNonGoodNonBadByDeltaRPileUpGen = ROOT.TH1D ("numberOfNonGoodNonBadByDelt
 numberOfGoodBadByDeltaRPileUpGen = ROOT.TH1D ("numberOfGoodBadByDeltaRPileUpGen", "numberOfGoodBadByDeltaRPileUpGen", 100, -.005, .995)
 
 deltaZ = ROOT.TH1D("Delta z position", "Delta z position", 100, -1, 1)
-eventsBad = Events ('FEVT_NonWorkingDetector20.root')
+eventsBad = Events ('FEVT_NonWorkingDetectorStation2.root')
 eventsGood = Events ('FEVT_WorkingDetector.root')
 
 # create handle outside of loop
@@ -110,6 +110,7 @@ def analyze(deltaR, relPt):
     numberOfGoodBadGen = 0
     
     for i in xrange(MAX_NUMBER):
+        print str(i)
         # GET THE EVENTS
         badEvent = eventsBad_iter.next()
         goodEvent = eventsGood_iter.next()
@@ -352,10 +353,11 @@ def analyze(deltaR, relPt):
     numberOfGoodBadByDeltaRPileUpGen.SetBinContent(numberOfGoodBadByDeltaRPileUpGen.FindBin(relPt), numberOfGoodBadGen*1./sumOfAll)
     numberOfNonGoodNonBadByDeltaRPileUpGen.SetBinContent(numberOfNonGoodNonBadByDeltaRPileUpGen.FindBin(relPt), numberOfNonGoodNonBadGen*1./sumOfAll)
 
+    save('FirstData.root', allNonWorkingRecoMuonsGood, efficiencyEtaPhiDiff, allRecoMuons, relAllRecoMuons, allWorkingRecoMuons, relAllWorkingRecoMuons, diffFailsEtaPhi, diffGhostsEtaPhi)
 
-
-for i in xrange(100):
-    analyze(.2, i*0.01)
-
+#for i in xrange(100):
+#    analyze(.2, i*0.01)
+analyze(.2, .5)
 #save('Data.root', deltaZ)
-save('OverallData.root', numberOfGoodNonBadByDeltaRPileUp, numberOfNonGoodBadByDeltaRPileUp, numberOfGoodBadByDeltaRPileUp, numberOfNonGoodNonBadByDeltaRPileUp, numberOfGoodNonBadByDeltaRPileUpGen, numberOfNonGoodBadByDeltaRPileUpGen, numberOfGoodBadByDeltaRPileUpGen, numberOfNonGoodNonBadByDeltaRPileUpGen)
+
+save('OverallData.root', numberOfGoodNonBadByDeltaRPileUp, numberOfNonGoodBadByDeltaRPileUp, numberOfGoodBadByDeltaRPileUp, numberOfNonGoodNonBadByDeltaRPileUp, numberOfGoodNonBadByDeltaRPileUpGen, numberOfNonGoodBadByDeltaRPileUpGen, numberOfGoodBadByDeltaRPileUpGen, numberOfNonGoodNonBadByDeltaRPileUpGen,)

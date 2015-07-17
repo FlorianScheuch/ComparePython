@@ -3,9 +3,13 @@ import math
 class Utils:
     @staticmethod
     def getEta(z, r):
+#         print 'z: ', str(z), ' r: ', str(r)
         a = math.atan(z/r)
+#         print 'a: ', str(a)
         b = math.tan(a/2)
-        c = -1.*math.log(b)
+#         print 'b: ', str(b)
+        c = -1.*math.copysign(1, b)*math.log(abs(b))
+#         print 'Eta (c): ' + str(c)
         return c
     
     @staticmethod
@@ -116,14 +120,20 @@ class Utils:
     
     @staticmethod
     def getNewAngle(trig):
+        """ This method calculates the entrance position of a muon in HO
+            Therefore, the position at a certain muon station is used and a linear or a circular extrapolation is done
+            l is the distance from the beam axis to the certain muon station
+            a is the distance between muon station and HO"""
 #        return trig.phi()
         phi = trig.phi()/4096.
         phiB = trig.phiB()/512.
-        a = 1.05
-        l = 3.85
+        a = .9
+        l = 4.645 #station 2
+        #l = 3.85 #station 1
         b = l-a
+        return math.atan((l*math.tan(phi) - a*math.tan(phi+phiB))/b)*4096.
         
-        r = Utils.getBendingRadius(trig, 1)# getRadius
+        r = Utils.getBendingRadius(trig, 2)# getRadius
         #val = (r*math.cos(math.asin(-1.*a/r-math.sin(phi+phiB)))+l*math.tan(phi)-r*math.cos(phi+phiB))/b
         try:
             radPhi = math.atan((r*math.cos(math.asin(-1.*a/r-math.sin(phi+phiB)))+l*math.tan(phi)-r*math.cos(phi+phiB))/b)
@@ -146,21 +156,33 @@ class Utils:
         var0Neg = -1.07813
         var1Neg = 2.34187
         var2Neg = -2.00791e-2
+        
+        p0 = 8.00605e-1
+        p1 = 1.84458
+        p2 = 1.71943e-2
+        n0 = -7.91097e-1
+        n1 = 1.89551
+        n2 = -1.75413e-2
         if station == 1:
             if phiB > 0:
                 pT = var0Pos/(phiB-var2Pos) - var1Pos
                 #print 'Positive'
                 #print 'pT: ' , pT
-                rad = 3.33*pT/1.
+                rad = 3.33*pT/.5
                 #print 'rad: ', rad
                 return rad
             else:
                 pT = var0Neg/(phiB-var2Neg) - var1Neg
                 #print 'Negative'
                 #print 'pT: ' , pT
-                rad = 3.33*pT/1.
+                rad = 3.33*pT/.5
                 #print 'rad: ', rad
                 return rad
+        if station == 2:
+            if phiB < 0:
+                return n0/(phiB-n2)+n1
+            else:
+                return p0/(phiB-p2)+p1
         else:
             return -1
     

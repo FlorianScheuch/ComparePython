@@ -118,11 +118,10 @@ def analyze(deltaR, relPt):
         phiContainer = phiContainerHandle.product()
         #----- END GET THE HANDLES -----
         
-        digis = phiContainer.getContainer();
+        digis = phiContainer.getContainer()
         
         #if genParticles.at(0).pt() > 10:
         #    continue
-        break
     
         if badHoEntries.size() > 0:
             highestHoEntry = badHoEntries.__getitem__(0)

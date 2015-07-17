@@ -2,6 +2,7 @@ import ROOT
 import math
 from DataFormats.FWLite import Events, Handle
 from Utils import *
+from HOMuon import *
 
 MAX_NUMBER = 24000
 
@@ -42,6 +43,7 @@ labelGenParticles = ("genParticles")
 #print Utils.getEta(7.38, 6.61) #Straight line from center to end of station 4 in wheel 2
 #print Utils.getEta(4.02, 3.954) #Straight line from center to end of station 1 wheel 1
 #print Utils.getEta(4.02, 1.268) #Straight line from center to end of station 1 in wheel 0
+print Utils.getEta(4.645, 1.28)
 #print 2**.5*math.pi/36
 
 def save(name, *plot):
@@ -52,17 +54,19 @@ def save(name, *plot):
 
 def printDigis(phDigi, thDigi):
     for d in phDigi:
-        if d.stNum() == 2:
+        if d.stNum() == 2 and d.scNum() == 1 and d.whNum() == 0:
             print 'Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
     for d in thDigi:
-        if d.stNum() == 2:
+        if d.stNum() == 2 and d.scNum() == 1 and d.whNum() == 0:
             for pos in xrange(8):
                 if d.position(pos) > 0:
                     print 'Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' pos: ', pos
 
-def machtesHO(phDigi, thDigi, hoEntries):
+def matchesHO(phDigi, thDigi, hoEntries, qualityCodes2d): #DONE
     # Do correction if possible here
-    phi = phDigi.phi()/2048.
+    iphi = 5
+    phi = Utils.getTrigPos(phDigi)
+    print 'Trigger position: ', str(phi)
     if phi > -10 and phi <= -5:
         iphi = 71
     if phi > -5 and phi <= 0:
@@ -76,34 +80,71 @@ def machtesHO(phDigi, thDigi, hoEntries):
     if phi > 15 and phi <= 20:
         iphi = 4
         
-        ieta = -20 #array machen
-     for pos in xrange(8):
-         if d.code(pos) > 0:
-             if d.whNum() == 0 and d.scNum() == 1 and d.stNum() == 2:
-                 ieta = pos - 3
+    ieta = -20 #array machen
+    if thDigi is not None:
+        ieta = -19
+        for pos in xrange(8):
+            if thDigi.code(pos) > 0:
+                if thDigi.whNum() == 0 and thDigi.scNum() == 1 and thDigi.stNum() == 2:
+                    ieta = pos - 3
+                    ieta = -1*ieta
 
+    print 'Muon expected at phi: ', str(iphi), ' eta: ', str(ieta) 
     for i in range(hoEntries.size()):
         bg = hoEntries.__getitem__(i)
         if bg.energy() > .2:
             detId = bg.id()
             if detId.iphi() == iphi:
                 testEta = detId.ieta()
-                if testEta < 0:
-                    testEta = testEta+1
+                if testEta > 0:
+                    testEta = testEta-1
                 if testEta == ieta:
-                    return True
+                    qualityCodes2d.Fill(0,0)
+                    return 40
                 if testEta == ieta - 1:
-                    return True
+                    qualityCodes2d.Fill(-1,0)
+                    return 30
                 if testEta == ieta + 1:
-                    return True
-    return False
+                    qualityCodes2d.Fill(1,0)
+                    return 30
+                for j in range(-4,4):
+                    if testEta == j:
+                        qualityCodes2d.Fill(testEta-ieta, 0)
+                        return 20
+                if ieta == -20: #Falls keine info fuer eta da ist
+                    qualityCodes2d.Fill(-10, 0)
+                    return 10
+            for xphi in xrange(3):
+                nphi = (((detId.iphi()-1) + 72 - 1 + xphi)%72) + 1
+                if nphi == iphi:
+                    testEta = detId.ieta()
+                    if testEta > 0:
+                        testEta = testEta-1
+                    if testEta == ieta:
+                        qualityCodes2d.Fill(0 , xphi-1)
+                        return 3
+                    if testEta == ieta - 1:
+                        qualityCodes2d.Fill(-1, xphi-1)
+                        return 2
+                    if testEta == ieta + 1:
+                        qualityCodes2d.Fill(1, xphi-1)
+                        return 2
+                    for j in range(-4,4):
+                        if testEta == j:
+                            qualityCodes2d.Fill(testEta-ieta, xphi-1)
+                            return 1
+                    if ieta == -20: #Falls keine info fuer eta da ist
+                        qualityCodes2d.Fill(-10, xphi-1)
+                        return 0
+                
+    return -1
 
     # Falls ieta == -20, dann gibt es keinen eta eintrag
     # Falls vorhanden gucke in iphi und ieta im intervall 3 nach einem eintrag ueber threshold
     # Falls nicht, gucke in iphi und komplett eta
     # Checks if phDigi matches to an ok HO entry
     
-def getPtFromDigi(phDigi, stNum):
+def getPtFromDigi(phDigi, stNum): #DONE
     # Return pT from digi
     # Use fit parameters from Dropbox/Promotion/CMS/Analyse/DTAngle/Script.c
     if stNum==2 :
@@ -117,34 +158,53 @@ def getPtFromDigi(phDigi, stNum):
         return 0
     phiB = phDigi.phiB()/512.
     if phiB < 0:
-        return n0/(phiB-n2)+n1
+        return abs(n0/(phiB-n2)+n1)
     else:
-        return p0/(phiB-p2)+p1
+        return abs(p0/(phiB-p2)+p1)
     
     
 def getPhiFromDigi(phDigi, stNum):
+    return -1.*phDigi.phi()/4096.
     # Return phi from digi
+    # Perhaps correct for bending
     
-def getEtaFromDigi(thDigi, stNum):
+def getEtaFromDigi(thDigi, stNum): # How to calculate?
+    for pos in xrange(8):
+         if thDigi.code(pos) > 0:
+             if stNum == 2:
+                 return Utils.getEta(4.645, (.32*pos) - 1.12)
+    return 0
+             
     # Return eta from digi
     # (give eta at the middle of station if no eta available)
     
-def getMuonCandidates(phDigi, thDigi):
+def getMuonCandidates(phDigi, thDigi, hoEntries, qualityCodes2d): #DONE
+    stNum = 2
     candidates = []
     # look for phi and theta and match to phi eta tile of ho. add to list of candidates if ho gives signal
     for dP in phDigi:
-        if matchesHOinPhi(dP, hoEntries):
-            for dT in thDigi:
-                if dP.stNum() == dT.stNum() and dP.scNum() == dT.scNum() and dP.whNum() == dT.whNum():
+        if not dP.stNum() == 2:
+#             print 'Station is ', str(dP.stNum()), ' ... continue'
+            continue
+        if not dP.scNum() == 1:
+#             print 'Sector is ', str(dP.scNum()), ' ... continue'
+            continue
+        if not dP.whNum() == 0:
+#             print 'Wheel is ', str(dP.whNum()), ' ... continue'
+            continue
+        hasThDigi = False
+        for dT in thDigi:
+            if dP.stNum() == dT.stNum() and dP.scNum() == dT.scNum() and dP.whNum() == dT.whNum():
                     # Here we have high quality and check for HO in eta and phi
-                    if matchesHOinEta(dT, hoEntries):
-                        # Create HQ HO muon status 10
-                    else
-                        # Create LQ HO muon status 5
-                        # Check whole slice -> quality 7
-                else
-                # Here we have low quality. No matching entry in DT for eta. LQ HO Muon status 1
-                # possibly check for whole eta slice -> think schould be done! quality 7
+                hasThDigi = True
+                quality = matchesHO(dP, dT, hoEntries, qualityCodes2d)
+                if quality >= 0:
+                        candidates.append(HOMuon(-1.*getEtaFromDigi(dT, stNum), getPhiFromDigi(dP, stNum), getPtFromDigi(dP, stNum), quality))
+        if hasThDigi == False:
+            quality = matchesHO(dP, None, hoEntries, qualityCodes2d)
+            if quality >= 0:
+                candidates.append(HOMuon(0, getPhiFromDigi(dP, stNum), -1*getPtFromDigi(dP, stNum), quality))
+    return candidates
 
 
 
@@ -162,6 +222,17 @@ def analyze(deltaR, relPt):
     
     ##    PLOTS   ##
     # Only RECO working / L1 working
+    qualityCodes = ROOT.TH1D("QualityCodes", "QualityCodes", 100, -1.5, 98.5)
+    qualityCodes2d = ROOT.TH2D("Quality Codes 2D", "Quality Codes 2D", 20, -10.5, 9.5, 10, -5.5, 4.5)
+    realPtVsL1Pt = ROOT.TH2D("Real Pt vs L1 HO Pt", "Real Pt vs L1 HO Pt", 100, 0, 500, 100, 0, 500)
+    realPhiVsL1Phi = ROOT.TH2D("Real Phi vs L1 HO Pt", "Real Phi vs L1 HO Pt", 100, -.5, .5, 100, -.5, .5)
+    realEtaVsL1Eta = ROOT.TH2D("Real Eta vs L1 HO Pt", "Real Eta vs L1 HO Pt", 100, -.5, .5, 100, -.5, .5)
+    
+    
+    
+    
+    
+    
     allRecoMuonsPt = ROOT.TH1D ("Pt of all RECO muons", "Pt of all RECO muons", 1000, 0, 100)
     allRecoMuons = ROOT.TH2D("Eta phi of all RECO muons / good detector", "Eta phi of all RECO muons / good detector", 30, -1.*Utils.getEta(4.02, 6.61), Utils.getEta(4.02, 6.61), 72, -1*math.pi, math.pi)
     
@@ -208,6 +279,11 @@ def analyze(deltaR, relPt):
     numberOfNonGoodBadGen = 0
     numberOfGoodNonBadGen = 0
     numberOfGoodBadGen = 0
+    
+    numberOfFails = 0
+    numberOfRecoveries = 0
+    
+    
     
     for i in xrange(MAX_NUMBER):
         # GET THE EVENTS
@@ -260,218 +336,36 @@ def analyze(deltaR, relPt):
         
         for element in goodRecoMuons:
             if Utils.isInRange(element):
-                deltaZ.Fill(element.vz())
-                allRecoMuons.Fill(element.eta(), element.phi())
-                allRecoMuonsPt.Fill(element.pt())
                 thisTuple = [element, Utils.getMatch(element, badL1Muons, deltaR, relPt), Utils.getMatch(element, goodL1Muons, deltaR, relPt)]
                 l1MuonTuple.append(thisTuple)
     
         for j in range(len(l1MuonTuple)):
             element = l1MuonTuple[j]
-            if element[matchingGoodMuon] == None:
-                allNonWorkingRecoMuonsGoodPt.Fill(element[recoMuon].pt())
-                allNonWorkingRecoMuonsGood.Fill(element[recoMuon].eta(), element[recoMuon].phi())
-                if not element[matchingBadMuon] == None:
-                    diffGhostsEtaPhi.Fill(element[recoMuon].eta(), element[recoMuon].phi())
-            else:
-                allWorkingRecoMuonsPt.Fill(element[recoMuon].pt())
-                allWorkingRecoMuons.Fill(element[recoMuon].eta(), element[recoMuon].phi())
+            if not element[matchingGoodMuon] == None:
                 if element[matchingBadMuon] == None:
-                    printDigis(phiDigis, thDigis)
-                    print 'RECO (gen), pT: ', element[recoMuon].pt(), ' eta: ', element[recoMuon].eta(), 'phi ', element[recoMuon].phi()
-                    print ' '
+                    if abs(element[recoMuon].eta()) < Utils.getEta(4.645, 1.28):
+                        if element[recoMuon].phi() >= -10.*math.pi/180. and element[recoMuon].phi() < 20./180.*math.pi:
+                            numberOfFails = numberOfFails + 1
+                            print 'Event ' + str(i) + ', RECO (gen), pT: ', str(element[recoMuon].pt()), ' eta: ', str(element[recoMuon].eta()), 'phi ', str(element[recoMuon].phi())
+                            printDigis(phiDigis, thDigis)
+                            candidates = getMuonCandidates(phiDigis, thDigis, badHoEntries, qualityCodes2d)
+                            for c in candidates:
+                                c.printInfo()
+                                qualityCodes.Fill(c.quality)
+                                realPtVsL1Pt.Fill(element[recoMuon].pt(), c.pt)
+                                realPhiVsL1Phi.Fill(element[recoMuon].phi(), c.phi)
+                                realEtaVsL1Eta.Fill(element[recoMuon].eta(), c.eta)
+                                numberOfRecoveries = numberOfRecoveries + 1
+                            if not candidates:
+                                qualityCodes.Fill(-1)
+                            print '--------------------------- '
                     
                     # Here we have the muons that are detected in L1 for the working detector, but are not detected in the non working detector anymore
                     # element[recoMuon] is the corresponding RECO muon (meaning the 'GEN' muon)
-                    numberOfAdditionals = numberOfAdditionals + 1
-                    diffFailsEtaPhi.Fill(element[recoMuon].eta(), element[recoMuon].phi())
-                    
-                    hoEntry = Utils.getHoEntry(Utils.translateToIPhi(element[recoMuon].phi()), Utils.translateToIEta(element[recoMuon].eta()), badHoEntries)
-                    highestEnergy3Phi = Utils.getHighestHoEntry3(Utils.translateToIPhi(element[recoMuon].phi()), Utils.translateToIEta(element[recoMuon].eta()), badHoEntries)
-                    hoEntryPlot3Phi.Fill(highestEnergy3Phi)
-                    if highestEnergy3Phi > 0.2:
-                        numberOfHighHOEntries3Phi = numberOfHighHOEntries3Phi + 1
-                    if hoEntry != None:
-                        if hoEntry.energy() > 0.2:
-                            numberOfHighHOEntries = numberOfHighHOEntries + 1
-                        #print hoEntry.energy()
-                        #print 'phi: ', Utils.translateToIEta(element[recoMuon].eta()) , ' phi: ', Utils.translateToIPhi(element[recoMuon].phi())
-                        hoEntryPlot.Fill(hoEntry.energy())
-                    else:
-                        #print '000'
-                        #print 'phi: ', Utils.translateToIEta(element[recoMuon].eta()) , ' phi: ', Utils.translateToIPhi(element[recoMuon].phi())
-                        hoEntryPlot.Fill(0)
-     
-        for element in l1MuonTuple:
-            if element[matchingBadMuon] == None:
-                allNonWorkingRecoMuonsBadPt.Fill(element[recoMuon].pt())
-                allNonWorkingRecoMuonsBad.Fill(element[recoMuon].eta(), element[recoMuon].phi())
-             
-             ########### Controll Plots   
-        for j in range(len(l1MuonTuple)):
-            element = l1MuonTuple[j]
-            if element[matchingBadMuon] == None:
-                if element[matchingGoodMuon] == None:
-                    NGoodNBadPt.Fill(element[recoMuon].pt())
-                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
-                        numberOfNonGoodNonBadGen = numberOfNonGoodNonBadGen + 1
-                    else:
-                        numberOfNonGoodNonBad = numberOfNonGoodNonBad + 1
-                else:
-                    YGoodNBadPt.Fill(element[recoMuon].pt())
-                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
-                        numberOfGoodNonBadGen = numberOfGoodNonBadGen + 1
-                    else:
-                        numberOfGoodNonBad = numberOfGoodNonBad + 1
-            else:
-                if element[matchingGoodMuon] == None:
-                    #print i
-                    NGoodYBadPt.Fill(element[recoMuon].pt())
-                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
-                        numberOfNonGoodBadGen = numberOfNonGoodBadGen + 1
-                    else:
-                        numberOfNonGoodBad = numberOfNonGoodBad + 1
-                else:
-                    YGoodYBadPt.Fill(element[recoMuon].pt())
-                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
-                        numberOfGoodBadGen = numberOfGoodBadGen + 1
-                    else:
-                        numberOfGoodBad = numberOfGoodBad + 1
-    ###### PLOTTING ######
-           
-    lowerPhi = -1*math.atan(65./355.)
-    upperPhi = math.atan(126./355.)
-    lowerEta = -1.*Utils.getEta(4.02, 1.268)
-    upperEta = Utils.getEta(4.02, 1.268)
-    
-    line1 = ROOT.TLine(lowerEta, lowerPhi, lowerEta, upperPhi)
-    line1.SetLineWidth(2)
-    line2 = ROOT.TLine(upperEta, lowerPhi, upperEta, upperPhi)
-    line2.SetLineWidth(2)           
-    ## Phi lines
-    line3 = ROOT.TLine(lowerEta, lowerPhi, upperEta, lowerPhi)
-    line3.SetLineWidth(2)
-    line4 = ROOT.TLine(lowerEta, upperPhi, upperEta, upperPhi)
-    line4.SetLineWidth(2)  
-    
-    canvas1 = ROOT.TCanvas()
-    allNonWorkingRecoMuonsGood.Draw('colz')
-    line1.Draw('same')
-    line2.Draw('same')
-    line3.Draw('same')
-    line4.Draw('same')
-    #canvas1.SaveAs('EfficiencyEtaPhiGood.png')
-    
-    canvas2 = ROOT.TCanvas()
-    allNonWorkingRecoMuonsBad.Draw('colz')
-    efficiencyEtaPhiDiff = allNonWorkingRecoMuonsBad.Clone()
-    efficiencyEtaPhiDiff.Add(allNonWorkingRecoMuonsGood, -1.)#
-    line1.Draw('same')
-    line2.Draw('same')
-    line3.Draw('same')
-    line4.Draw('same')
-    #canvas2.SaveAs('EfficiencyEtaPhiBad.png')
-    
-    canvas3 = ROOT.TCanvas()
-    efficiencyEtaPhiDiff.Draw('colz')
-    line1.Draw('same')
-    line2.Draw('same')
-    line3.Draw('same')
-    line4.Draw('same')
-    #canvas3.SaveAs('EfficiencyEtaPhiDiff.png')
-    
-    canvas4 = ROOT.TCanvas()
-    allRecoMuons.Draw('colz')
-    line1.Draw('same')
-    line2.Draw('same')
-    line3.Draw('same')
-    line4.Draw('same')
-    #canvas4.SaveAs('AllRecoMuons.png')
-    
-    canvas5 = ROOT.TCanvas()
-    relAllRecoMuons = efficiencyEtaPhiDiff.Clone()
-    relAllRecoMuons.Divide(allRecoMuons)
-    relAllRecoMuons.SetTitle('Additional missing L1 muons / number of all RECO (GEN) muons')
-    relAllRecoMuons.Draw('colz')
-    line1.Draw('same')
-    line2.Draw('same')
-    line3.Draw('same')
-    line4.Draw('same')
-    #canvas5.SaveAs('relAllRecoMuons.png')
-    
-    canvas6 = ROOT.TCanvas()
-    allWorkingRecoMuons.Draw('colz')
-    line1.Draw('same')
-    line2.Draw('same')
-    line3.Draw('same')
-    line4.Draw('same')
-    #canvas6.SaveAs('AllWorkingRecoMuons.png')
-    
-    canvas7 = ROOT.TCanvas()
-    relAllWorkingRecoMuons = efficiencyEtaPhiDiff.Clone()
-    relAllWorkingRecoMuons.Divide(allWorkingRecoMuons)
-    relAllWorkingRecoMuons.SetTitle('Additional missing L1 muons / number of all RECO (GEN) muons with L1 match')
-    relAllWorkingRecoMuons.Draw('colz')
-    relAllWorkingRecoMuons.GetXaxis().SetTitle('#eta')
-    relAllWorkingRecoMuons.GetXaxis().SetTitle('#phi')
-    #line1.Draw('same')
-    #line2.Draw('same')
-    #line3.Draw('same')
-    #line4.Draw('same')
-    #canvas7.SaveAs('relAllWorkingRecoMuons.png')
-    
-    canvas8 = ROOT.TCanvas()
-    diffFailsEtaPhi.Draw('colz')
-    
-    canvas9 = ROOT.TCanvas()
-    temp1 = diffFailsEtaPhi.Clone()
-    temp1.Divide(allWorkingRecoMuons)
-    temp1.Draw('colz')
-    
-    ###### CALCULATE VALUES
-    sumEntries = 0
-    sumMean = 0
-    nEntries = 0
-    for eta in range(12,20):
-        for phi in range(35,41):
-            nEntries = nEntries+1
-            sumEntries = sumEntries + diffFailsEtaPhi.GetBinContent(eta, phi)
-            sumMean = sumMean + temp1.GetBinContent(eta,phi)
-    sumMean = sumMean*1./nEntries/1.
-    #print 'Summe der zusaetzlichen Fails im Bereich der abgeschalteten Kammer: ', sumEntries
-    #print 'Anteil der zusaetzlichen Fails bezogen auf die vorher funktionierenden Identifikationen im Bereich der abgeschalteten Kammer: ', sumMean
-    #print 'Anzahl der bins: ', nEntries        
-    #print 'Anzahl zusaetzlich fehlenden L1 myonen: ', numberOfAdditionals
-    #print 'Anzahl der hohen HO entries bei fehlendem L1: ', numberOfHighHOEntries
-    #print 'Anzahl der hohen HO entries bei fehlendem L1 in 3 phi: ', numberOfHighHOEntries3Phi
-    
-    print relPt
-    print 'numberOfNonGoodNonBad ', numberOfNonGoodNonBad
-    print 'numberOfNonGoodBad ', numberOfNonGoodBad
-    print 'numberOfGoodNonBad ', numberOfGoodNonBad
-    print 'numberOfGoodBad ', numberOfGoodBad
-    
-    print 'numberOfNonGoodNonBadGen ', numberOfNonGoodNonBadGen
-    print 'numberOfNonGoodBadGen ', numberOfNonGoodBadGen
-    print 'numberOfGoodNonBadGen ', numberOfGoodNonBadGen
-    print 'numberOfGoodBadGen ', numberOfGoodBadGen
-    
-    sumOfAll = numberOfNonGoodNonBad + numberOfNonGoodNonBadGen + numberOfNonGoodBad + numberOfNonGoodBadGen + numberOfGoodNonBad + numberOfGoodNonBadGen + numberOfGoodBad + numberOfGoodBadGen
-    
-    numberOfGoodNonBadByDeltaRPileUp.SetBinContent(numberOfGoodNonBadByDeltaRPileUp.FindBin(relPt), numberOfGoodNonBad*1./sumOfAll)
-    numberOfNonGoodBadByDeltaRPileUp.SetBinContent(numberOfNonGoodBadByDeltaRPileUp.FindBin(relPt), numberOfNonGoodBad*1./sumOfAll)
-    numberOfGoodBadByDeltaRPileUp.SetBinContent(numberOfGoodBadByDeltaRPileUp.FindBin(relPt), numberOfGoodBad*1./sumOfAll)
-    numberOfNonGoodNonBadByDeltaRPileUp.SetBinContent(numberOfNonGoodNonBadByDeltaRPileUp.FindBin(relPt), numberOfNonGoodNonBad*1./sumOfAll)
-   
-    numberOfGoodNonBadByDeltaRPileUpGen.SetBinContent(numberOfGoodNonBadByDeltaRPileUpGen.FindBin(relPt), numberOfGoodNonBadGen*1./sumOfAll)
-    numberOfNonGoodBadByDeltaRPileUpGen.SetBinContent(numberOfNonGoodBadByDeltaRPileUpGen.FindBin(relPt), numberOfNonGoodBadGen*1./sumOfAll)
-    numberOfGoodBadByDeltaRPileUpGen.SetBinContent(numberOfGoodBadByDeltaRPileUpGen.FindBin(relPt), numberOfGoodBadGen*1./sumOfAll)
-    numberOfNonGoodNonBadByDeltaRPileUpGen.SetBinContent(numberOfNonGoodNonBadByDeltaRPileUpGen.FindBin(relPt), numberOfNonGoodNonBadGen*1./sumOfAll)
-
-
-
+    print 'Number of additional fails: ', str(numberOfFails)
+    print 'Number of recoveries : ' , str(numberOfRecoveries)
+    save('Quality.root', qualityCodes, realPtVsL1Pt, realPhiVsL1Phi, realEtaVsL1Eta, qualityCodes2d)
 #for i in xrange(100):
 analyze(.2, .5)
 
 #save('Data.root', deltaZ)
-save('OverallData.root', numberOfGoodNonBadByDeltaRPileUp, numberOfNonGoodBadByDeltaRPileUp, numberOfGoodBadByDeltaRPileUp, numberOfNonGoodNonBadByDeltaRPileUp, numberOfGoodNonBadByDeltaRPileUpGen, numberOfNonGoodBadByDeltaRPileUpGen, numberOfGoodBadByDeltaRPileUpGen, numberOfNonGoodNonBadByDeltaRPileUpGen)
