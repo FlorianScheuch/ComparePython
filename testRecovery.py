@@ -10,6 +10,8 @@ MAX_NUMBER = 24000 #Events per file
 fileList = []
 fileList.append(['FEVT_WorkingDetector.root', 'FEVT_NonWorkingDetector.root'])
 
+#/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/Working2
+# uberftp grid-srm "cd /pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/Working2/; get FEVT_NonWorkingDetector1.root"
 
 # create handle outside of loop
 genParticlesHandle  = Handle ('std::vector<reco::GenParticle>')
