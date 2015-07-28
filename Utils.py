@@ -1,4 +1,5 @@
 import math
+#from colorama import init, Fore, Back, Style
 
 class Utils:
     @staticmethod
@@ -147,44 +148,38 @@ class Utils:
             return newPhi*4096.
     
     @staticmethod
-    def getBendingRadius(trig, station):
-        phiB = trig.phiB()/512.
-        
-        var0Pos = 1.10456
-        var1Pos = 2.27101
-        var2Pos = 1.57637e-2
-        var0Neg = -1.07813
-        var1Neg = 2.34187
-        var2Neg = -2.00791e-2
-        
-        p0 = 8.00605e-1
-        p1 = 1.84458
-        p2 = 1.71943e-2
-        n0 = -7.91097e-1
-        n1 = 1.89551
-        n2 = -1.75413e-2
-        if station == 1:
-            if phiB > 0:
-                pT = var0Pos/(phiB-var2Pos) - var1Pos
-                #print 'Positive'
-                #print 'pT: ' , pT
-                rad = 3.33*pT/.5
-                #print 'rad: ', rad
-                return rad
-            else:
-                pT = var0Neg/(phiB-var2Neg) - var1Neg
-                #print 'Negative'
-                #print 'pT: ' , pT
-                rad = 3.33*pT/.5
-                #print 'rad: ', rad
-                return rad
-        if station == 2:
-            if phiB < 0:
-                return n0/(phiB-n2)+n1
-            else:
-                return p0/(phiB-p2)+p1
+    def getPtFromDigi(phDigi): #DONE
+        stNum = phDigi.stNum()
+        print 'StationNo: ', str(stNum)
+    # Return pT from digi
+    # Use fit parameters from Dropbox/Promotion/CMS/Analyse/DTAngle/Script.c
+        if stNum==2:
+            p0 = 8.00605e-1
+            p1 = 1.84458
+            p2 = 1.71943e-2
+            n0 = -7.91097e-1
+            n1 = 1.89551
+            n2 = -1.75413e-2
+        elif stNum==1:
+            p0 = 1.10456
+            p1 = 2.27101
+            p2 = 1.57637e-2
+            n0 = -1.07813
+            n1 = 2.34187
+            n2 = -2.00791e-2
         else:
-            return -1
+            print 'Here'
+            return 0
+        phiB = phDigi.phiB()/512.
+        if phiB < 0:
+            return abs(n0/(phiB-n2)+n1)
+        else:
+            return abs(p0/(phiB-p2)+p1)
+    
+    @staticmethod
+    def getBendingRadius(trig, station):
+        pT = Utils.getPtFromDigi(trig)
+        return 3.33*pT/.5
     
     @staticmethod
     def getTrigDir(trig):
