@@ -3,12 +3,19 @@ import math
 from DataFormats.FWLite import Events, Handle
 from Utils import *
 from HOMuon import *
+import os
+import thread
+import threading
+import subprocess
 #from colorama import init, Fore, Back, Style
 
-MAX_NUMBER = 24000 #Events per file
+MAX_NUMBER = 1000 #Events per file
 
 fileList = []
-fileList.append(['FEVT_WorkingDetector.root', 'FEVT_NonWorkingDetector.root'])
+for i in range(1,51):
+    fileList.append(['FEVT_WorkingDetector'+str(i)+'.root', 'FEVT_NonWorkingDetector'+str(i)+'.root'])
+
+eventList = []
 
 #/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/Working2
 # uberftp grid-srm "cd /pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/Working2/; get FEVT_NonWorkingDetector1.root"
@@ -38,6 +45,22 @@ labelGenParticles = ("genParticles")
 #print Utils.getEta(4.02, 1.268) #Straight line from center to end of station 1 in wheel 0
 print Utils.getEta(4.645, 1.28)
 #print 2**.5*math.pi/36
+
+def download(filename, event):
+    pr = subprocess.Popen(filename)
+    pr.communicate()
+    event.set()
+    print 'Done downloading: ' , filename
+
+def downloadAll():
+    for f in range(len(fileList)):
+        print 'Downloading: ' , fileList[f][0]
+        download(['uberftp', 'grid-ftp.physik.rwth-aachen.de',r'cd /pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/Working2/; get '+ fileList[f][0]], eventList[f][0])
+        print 'Downloading: ' , fileList[f][1]
+        download(['uberftp', 'grid-ftp.physik.rwth-aachen.de',r'cd /pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/NonWorking2/; get '+ fileList[f][1]], eventList[f][1])
+        # downloaden
+        # warten
+        # event auf set setzen
 
 def save(name, *plot):
     file = ROOT.TFile(name, 'RECREATE')
@@ -223,7 +246,11 @@ def getMuonCandidates(phDigi, thDigi, hoEntries, qualityCodes2d, stNum): #DONE
 def analyze(deltaR, relPt, stNum):
     # deltaR: DeltaR of the matching cone
     # relPt: allowed relative pT deviation (1 = no deviation, 0 = infinit deviation)
-
+    for file in fileList:
+        event = [threading.Event(), threading.Event()]
+        eventList.append(event)
+    t = threading.Thread(target=downloadAll)
+    t.start()
     
     ROOT.gROOT.SetStyle('Plain') # white background
     
@@ -243,10 +270,16 @@ def analyze(deltaR, relPt, stNum):
     numberOfFails = 0
     numberOfRecoveries = 0
     
-    for files in fileList:
+
     
-        eventsBad = Events (files[1]) #sample with dead MB1
-        eventsGood = Events (files[0])
+    for f in range(len(fileList)):
+        
+        eventList[f][0].wait()#warten auf beide events event.wait()
+        eventList[f][1].wait()
+        print 'Files ', fileList[f][0], ' and ', fileList[f][1], ' are ready... analyzing them'
+        
+        eventsBad = Events(fileList[f][1]) #sample with dead MB1
+        eventsGood = Events(fileList[f][0])
     
         eventsBad.toBegin()
         eventsGood.toBegin()
@@ -334,10 +367,15 @@ def analyze(deltaR, relPt, stNum):
                     
                     # Here we have the muons that are detected in L1 for the working detector, but are not detected in the non working detector anymore
                     # element[recoMuon] is the corresponding RECO muon (meaning the 'GEN' muon)
+        #files Loeschen
+        print 'Removing file: ', fileList[f][1]
+        os.remove(fileList[f][1]) #sample with dead MB1
+        print 'Removing file: ', fileList[f][0]
+        os.remove(fileList[f][0])
     print 'Number of additional fails: ', str(numberOfFails)
     print 'Number of recoveries : ' , str(numberOfRecoveries)
     save('Quality.root', qualityCodes, realPtVsL1Pt, realPhiVsL1Phi, realEtaVsL1Eta, qualityCodes2d, genPositionsOfRecMuons, recoPositionOfMuons)
 #for i in xrange(100):
-analyze(.2, .5, 2)
+analyze(.2, .5, 1)
 
 #save('Data.root', deltaZ)
