@@ -255,7 +255,7 @@ def getMuonCandidates(phDigi, thDigi, hoEntries, qualityCodes2d, stNum): #DONE
         if hasThDigi == False:
             quality = matchesHO(dP, None, hoEntries, qualityCodes2d)
             if quality >= 0:
-                candidates.append(HOMuon(0, getPhiFromDigi(dP), -1*Utils.getPtFromDigi(dP), quality))
+                candidates.append(HOMuon(0, getPhiFromDigi(dP), Utils.getPtFromDigi(dP), quality))
     return candidates
 
 
