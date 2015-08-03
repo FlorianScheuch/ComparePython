@@ -286,6 +286,7 @@ def analyze(deltaR, relPt, stNum):
     
     numberOfFails = 0
     numberOfRecoveries = 0
+    numberOfRecEvents = 0
     
 
     
@@ -368,6 +369,8 @@ def analyze(deltaR, relPt, stNum):
                                 print 'Event ' + str(i) + ', RECO (gen), pT: ', str(element[recoMuon].pt()), ' eta: ', str(element[recoMuon].eta()), 'phi ', str(element[recoMuon].phi())
                                 if printDigis(phiDigis, thDigis):
                                     candidates = getMuonCandidates(phiDigis, thDigis, badHoEntries, qualityCodes2d, stNum)
+                                    if candidates:
+                                        numberOfRecEvents = numberOfRecEvents+1
                                     for c in candidates:
                                         c.printInfo()
                                         qualityCodes.Fill(c.quality)
@@ -390,6 +393,7 @@ def analyze(deltaR, relPt, stNum):
         print 'Removing file: ', fileList[f][0]
         os.remove(fileList[f][0])
     print 'Number of additional fails: ', str(numberOfFails)
+    print 'Number of recovered events: ', str(numberOfRecEvents)
     print 'Number of recoveries : ' , str(numberOfRecoveries)
     save('Quality.root', qualityCodes, realPtVsL1Pt, realPhiVsL1Phi, realEtaVsL1Eta, qualityCodes2d, genPositionsOfRecMuons, recoPositionOfMuons)
 #for i in xrange(100):
