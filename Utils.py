@@ -128,13 +128,15 @@ class Utils:
 #        return trig.phi()
         phi = trig.phi()/4096.
         phiB = trig.phiB()/512.
-        a = .9
-        l = 4.645 #station 2
-        #l = 3.85 #station 1
+        a = .3
+        if trig.stNum() == 1:
+            l = 3.85 #station 1
+        if trig.stNum() == 2:
+            l = 4.645 #station 2
         b = l-a
         return math.atan((l*math.tan(phi) - a*math.tan(phi+phiB))/b)*4096.
         
-        r = Utils.getBendingRadius(trig, 2)# getRadius
+        r = Utils.getBendingRadius(trig)# getRadius
         #val = (r*math.cos(math.asin(-1.*a/r-math.sin(phi+phiB)))+l*math.tan(phi)-r*math.cos(phi+phiB))/b
         try:
             radPhi = math.atan((r*math.cos(math.asin(-1.*a/r-math.sin(phi+phiB)))+l*math.tan(phi)-r*math.cos(phi+phiB))/b)
@@ -177,9 +179,15 @@ class Utils:
             return abs(p0/(phiB-p2)+p1)
     
     @staticmethod
-    def getBendingRadius(trig, station):
+    def getBendingRadius(trig):
         pT = Utils.getPtFromDigi(trig)
-        return 3.33*pT/.5
+        return 3.33*pT/1
+    
+    @staticmethod
+    def hasPositiveRF(trig):
+        if trig.whNum() > 0 or trig.scNum()%4>1:
+            return True
+        return False
     
     @staticmethod
     def getTrigDir(trig):

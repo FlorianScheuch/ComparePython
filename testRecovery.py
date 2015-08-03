@@ -9,10 +9,14 @@ import threading
 import subprocess
 #from colorama import init, Fore, Back, Style
 
+# voms-proxy-init --voms cms
+
+
 MAX_NUMBER = 1000 #Events per file
+stNum=1
 
 fileList = []
-for i in range(1,51):
+for i in range(1,51): # 1,51
     fileList.append(['FEVT_WorkingDetector'+str(i)+'.root', 'FEVT_NonWorkingDetector'+str(i)+'.root'])
 
 eventList = []
@@ -71,26 +75,29 @@ def save(name, *plot):
 def printDigis(phDigi, thDigi):
     printed = False
     for d in phDigi:
-        if d.stNum() == 2 and d.scNum() == 1 and d.whNum() == 0:
-            print 'Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+        sc = d.scNum()+1
+        #print str(d.stNum()), ' ', str(d.scNum()), ' ', str(d.whNum())
+        if d.stNum() == 1 and sc == 1 and d.whNum() == 0:
+            print 'Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
-        if d.stNum() == 2 and d.scNum() == 12 and d.whNum() == 0:
-            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+        if d.stNum() == 1 and sc == 12 and d.whNum() == 0:
+            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
-        if d.stNum() == 2 and d.scNum() == 2 and d.whNum() == 0:
-            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+        if d.stNum() == 1 and sc == 2 and d.whNum() == 0:
+            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
-        if d.stNum() == 2 and d.scNum() == 1 and d.whNum() == -1:
-            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+        if d.stNum() == 1 and sc == 1 and d.whNum() == -1:
+            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
-        if d.stNum() == 2 and d.scNum() == 1 and d.whNum() == 1:
-            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+        if d.stNum() == 1 and sc == 1 and d.whNum() == 1:
+            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
     for d in thDigi:
-        if d.stNum() == 2 and d.scNum() == 1 and d.whNum() == 0:
+        sc = d.scNum()+1
+        if d.stNum() == 1 and sc == 1 and d.whNum() == 0:
             for pos in xrange(8):
                 if d.position(pos) > 0:
-                    print 'Station: ', d.stNum(), ' Sector: ', d.scNum(), ' Wheel: ', d.whNum(), ' pos: ', pos
+                    print 'Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' pos: ', pos
                     printed = True
     return printed
 
@@ -99,6 +106,7 @@ def matchesHO(phDigi, thDigi, hoEntries, qualityCodes2d): #DONE
     # from station 2. wheel +/-1 sector 12/2: check if the muon would go through MB1, sector 1, wheel 0
     # if yes: do the extrapolation and check
     # Do correction if possible here
+    phSc = phDigi.scNum()+1
     iphi = 5
     phi = Utils.getTrigPos(phDigi)
     print 'Trigger position: ', str(phi)
@@ -117,10 +125,13 @@ def matchesHO(phDigi, thDigi, hoEntries, qualityCodes2d): #DONE
         
     ieta = -20 #array machen
     if thDigi is not None:
+        thSc = thDigi.scNum()+1
         ieta = -19
         for pos in xrange(8):
             if thDigi.code(pos) > 0:
-                if thDigi.whNum() == 0 and thDigi.scNum() == 1 and thDigi.stNum() == 2:
+                if thDigi.whNum() == 0 and thSc == 1 and thDigi.stNum() == 1:
+                    if thDigi.whNum() == -2 or thDigi.whNum() == -1 or ( thDigi.whNum() == 0 and (thDigi.scNum() == 0 or thDigi.scNum() == 3 or thDigi.scNum() == 4 or thDigi.scNum() == 7 or thDigi.scNum() == 8 or thDigi.scNum() == 11)):
+                        pos = 6-pos
                     ieta = pos - 3
                     ieta = -1*ieta
 
@@ -183,8 +194,10 @@ def matchesHO(phDigi, thDigi, hoEntries, qualityCodes2d): #DONE
     
     
 def getPhiFromDigi(phDigi):
-    scNum = phDigi.scNum()
-    phi = -1.*phDigi.phi()/4096.
+    scNum = phDigi.scNum()+1
+    phi = phDigi.phi()/4096.
+    if Utils.hasPositiveRF(phDigi):
+        phi = -1.*phi
     scTransition = scNum-((scNum/7)*-12)-1
     return (phi+(scTransition*math.pi/6.))
     
@@ -194,8 +207,12 @@ def getPhiFromDigi(phDigi):
 def getEtaFromDigi(thDigi): # More than one positive possible! Prepared to return all! Has to be reviewed in rest of code before!
     etas = []
     stNum = thDigi.stNum()
+    wheel = thDigi.whNum()
+    sector = thDigi.scNum()
     for pos in xrange(8):
          if thDigi.code(pos) > 0:
+             if wheel == -2 or wheel == -1 or ( wheel == 0 and (sector == 0 or sector == 3 or sector == 4 or sector == 7 or sector == 8 or sector == 11) ):
+                 pos = 6-pos
              if stNum == 1:
                  etas.append(Utils.getEta(3.850, (.32*pos) - 1.12))
                  return etas[0]
@@ -221,7 +238,7 @@ def getMuonCandidates(phDigi, thDigi, hoEntries, qualityCodes2d, stNum): #DONE
         if not dP.stNum() == stNum:
 #             print 'Station is ', str(dP.stNum()), ' ... continue'
             continue
-        if not dP.scNum() == 1:
+        if not dP.scNum()+1 == 1:
 #             print 'Sector is ', str(dP.scNum()), ' ... continue'
             continue
         if not dP.whNum() == 0:
@@ -345,7 +362,7 @@ def analyze(deltaR, relPt, stNum):
                 element = l1MuonTuple[j]
                 if not element[matchingGoodMuon] == None:
                     if element[matchingBadMuon] == None:
-                        if abs(element[recoMuon].eta()) < Utils.getEta(4.645, 1.28):
+                        if abs(element[recoMuon].eta()) < Utils.getEta(3.85, 1.28):
                             if element[recoMuon].phi() >= -10.*math.pi/180. and element[recoMuon].phi() < 20./180.*math.pi:
                                 numberOfFails = numberOfFails + 1
                                 print 'Event ' + str(i) + ', RECO (gen), pT: ', str(element[recoMuon].pt()), ' eta: ', str(element[recoMuon].eta()), 'phi ', str(element[recoMuon].phi())
