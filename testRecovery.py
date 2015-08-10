@@ -16,7 +16,7 @@ MAX_NUMBER = 1000 #Events per file
 stNum=1
 
 fileList = []
-for i in range(1,51): # 1,51
+for i in range(1,101): # 1,51
     fileList.append(['FEVT_WorkingDetector'+str(i)+'.root', 'FEVT_NonWorkingDetector'+str(i)+'.root'])
 
 eventList = []
@@ -276,6 +276,7 @@ def analyze(deltaR, relPt, stNum):
     # Only RECO working / L1 working
     qualityCodes = ROOT.TH1D("QualityCodes", "QualityCodes", 100, -1.5, 98.5)
     qualityCodes2d = ROOT.TH2D("Quality Codes 2D", "Quality Codes 2D", 20, -10.5, 9.5, 10, -5.5, 4.5)
+    qualityCodes2dWrong = ROOT.TH2D("Quality Codes 2D Wrong", "Quality Codes 2D Wrong", 20, -10.5, 9.5, 10, -5.5, 4.5)
     realPtVsL1Pt = ROOT.TH2D("Real Pt vs L1 HO Pt", "Real Pt vs L1 HO Pt", 100, 0, 500, 100, 0, 500)
     realPhiVsL1Phi = ROOT.TH2D("Real Phi vs L1 HO Pt", "Real Phi vs L1 HO Pt", 100, -.5, .5, 100, -.5, .5)
     realEtaVsL1Eta = ROOT.TH2D("Real Eta vs L1 HO Pt", "Real Eta vs L1 HO Pt", 100, -.5, .5, 100, -.5, .5)
@@ -287,7 +288,7 @@ def analyze(deltaR, relPt, stNum):
     numberOfFails = 0
     numberOfRecoveries = 0
     numberOfRecEvents = 0
-    
+    numberOfTooMany = 0
 
     
     for f in range(len(fileList)):
@@ -384,6 +385,14 @@ def analyze(deltaR, relPt, stNum):
                                     if candidates:
                                         genPositionsOfRecMuons.Fill(element[recoMuon].eta(), element[recoMuon].phi())
                                     print '--------------------------- '
+                    else:
+                        if printDigis(phiDigis, thDigis):
+                            candidates = getMuonCandidates(phiDigis, thDigis, badHoEntries, qualityCodes2dWrong, stNum) #change plots!
+                            for c in candidates:
+                                c.printInfo()
+                            if len(c) > 1:
+                                numberOfTooMany = numberOfTooMany + 1
+                        
                     
                     # Here we have the muons that are detected in L1 for the working detector, but are not detected in the non working detector anymore
                     # element[recoMuon] is the corresponding RECO muon (meaning the 'GEN' muon)
@@ -395,7 +404,7 @@ def analyze(deltaR, relPt, stNum):
     print 'Number of additional fails: ', str(numberOfFails)
     print 'Number of recovered events: ', str(numberOfRecEvents)
     print 'Number of recoveries : ' , str(numberOfRecoveries)
-    save('Quality.root', qualityCodes, realPtVsL1Pt, realPhiVsL1Phi, realEtaVsL1Eta, qualityCodes2d, genPositionsOfRecMuons, recoPositionOfMuons)
+    save('Quality.root', qualityCodes, realPtVsL1Pt, realPhiVsL1Phi, realEtaVsL1Eta, qualityCodes2d, genPositionsOfRecMuons, recoPositionOfMuons, qualityCodes2dWrong)
 #for i in xrange(100):
 analyze(.2, .5, 1)
 
