@@ -1,9 +1,18 @@
 class HOMuon:
     def __init__(self, eta, phi, pt, quality):
-        self.eta = eta
-        self.phi = phi
-        self.pt = pt 
+        self._eta = eta
+        self._phi = phi
+        self._pt = pt 
         self.quality = quality
     
     def printInfo(self):
-        print 'Quality: ' + str(self.quality) + ' Eta: ' + str(self.eta) + ' Phi: ' + str(self.phi) + ' pT: ' + str(self.pt)
+        print 'Quality: ' + str(self.quality) + ' Eta: ' + str(self._eta) + ' Phi: ' + str(self._phi) + ' pT: ' + str(self._pt)
+    
+    def eta(self):
+        return self._eta
+    
+    def phi(self):
+        return self._phi
+    
+    def pt(self):
+        return self._pt

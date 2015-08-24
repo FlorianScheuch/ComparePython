@@ -32,7 +32,7 @@ class Utils:
         #2**.5*math.pi/36:i
         #print 'NoMatch'
             return 
-        if abs((minMuon.pt()-muon1.pt())/(minMuon.pt()+muon1.pt())) > relPt:
+        if (muon1.pt()-minMuon.pt())/(minMuon.pt()+muon1.pt()) > relPt:
             #print 'NoMatch'
             return
         return minMuon
@@ -128,7 +128,7 @@ class Utils:
 #        return trig.phi()
         phi = trig.phi()/4096.
         phiB = trig.phiB()/512.
-        a = .3
+        a = .2
         if trig.stNum() == 1:
             l = 3.85 #station 1
         if trig.stNum() == 2:
@@ -152,7 +152,6 @@ class Utils:
     @staticmethod
     def getPtFromDigi(phDigi): #DONE
         stNum = phDigi.stNum()
-        print 'StationNo: ', str(stNum)
     # Return pT from digi
     # Use fit parameters from Dropbox/Promotion/CMS/Analyse/DTAngle/Script.c
         if stNum==2:
@@ -170,7 +169,6 @@ class Utils:
             n1 = 2.34187
             n2 = -2.00791e-2
         else:
-            print 'Here'
             return 0
         phiB = phDigi.phiB()/512.
         if phiB < 0:

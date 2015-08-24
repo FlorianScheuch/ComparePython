@@ -7,19 +7,20 @@ import os
 import thread
 import threading
 import subprocess
+import sys
 #from colorama import init, Fore, Back, Style
 
-# voms-proxy-init --voms cms
+# voms-proxy-init --voms cms --valid 300:00
 
 
 MAX_NUMBER = 1000 #Events per file
 stNum=1
-
 fileList = []
-for i in range(1,101): # 1,51
+for i in range(1,3): # 1,51 101
     fileList.append(['FEVT_WorkingDetector'+str(i)+'.root', 'FEVT_NonWorkingDetector'+str(i)+'.root'])
-
 eventList = []
+
+
 
 #/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/Working2
 # uberftp grid-srm "cd /pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/Working2/; get FEVT_NonWorkingDetector1.root"
@@ -47,15 +48,19 @@ labelGenParticles = ("genParticles")
 #print Utils.getEta(7.38, 6.61) #Straight line from center to end of station 4 in wheel 2
 #print Utils.getEta(4.02, 3.954) #Straight line from center to end of station 1 wheel 1
 #print Utils.getEta(4.02, 1.268) #Straight line from center to end of station 1 in wheel 0
-print Utils.getEta(4.645, 1.28)
+# print Utils.getEta(4.645, 1.28)
 #print 2**.5*math.pi/36
+
 
 def download(filename, event):
     pr = subprocess.Popen(filename)
-    pr.communicate()
-    event.set()
-    print 'Done downloading: ' , filename
-
+    pr.communicate() 
+    if pr.returncode == 0:
+        event.set()
+        print 'Done downloading: ' , filename, ' with exit code ', pr.returncode
+    else:
+        print 'Error downloading: ' , filename, ' with exit code ', pr.returncode
+        
 def downloadAll():
     for f in range(len(fileList)):
         print 'Downloading: ' , fileList[f][0]
@@ -78,26 +83,26 @@ def printDigis(phDigi, thDigi):
         sc = d.scNum()+1
         #print str(d.stNum()), ' ', str(d.scNum()), ' ', str(d.whNum())
         if d.stNum() == 1 and sc == 1 and d.whNum() == 0:
-            print 'Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+#             print 'Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
         if d.stNum() == 1 and sc == 12 and d.whNum() == 0:
-            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+#             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
         if d.stNum() == 1 and sc == 2 and d.whNum() == 0:
-            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+#             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
         if d.stNum() == 1 and sc == 1 and d.whNum() == -1:
-            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+#             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
         if d.stNum() == 1 and sc == 1 and d.whNum() == 1:
-            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+#             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
     for d in thDigi:
         sc = d.scNum()+1
         if d.stNum() == 1 and sc == 1 and d.whNum() == 0:
             for pos in xrange(8):
                 if d.position(pos) > 0:
-                    print 'Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' pos: ', pos
+#                     print 'Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' pos: ', pos
                     printed = True
     return printed
 
@@ -109,7 +114,7 @@ def matchesHO(phDigi, thDigi, hoEntries, qualityCodes2d): #DONE
     phSc = phDigi.scNum()+1
     iphi = 5
     phi = Utils.getTrigPos(phDigi)
-    print 'Trigger position: ', str(phi)
+#     print 'Trigger position: ', str(phi)
     if phi > -10 and phi <= -5:
         iphi = 71
     if phi > -5 and phi <= 0:
@@ -135,7 +140,7 @@ def matchesHO(phDigi, thDigi, hoEntries, qualityCodes2d): #DONE
                     ieta = pos - 3
                     ieta = -1*ieta
 
-    print 'Muon expected at phi: ', str(iphi), ' eta: ', str(ieta) 
+#     print 'Muon expected at phi: ', str(iphi), ' eta: ', str(ieta) 
     for i in range(hoEntries.size()):
         bg = hoEntries.__getitem__(i)
         if bg.energy() > .2:
@@ -275,15 +280,25 @@ def analyze(deltaR, relPt, stNum):
     ##    PLOTS   ##
     # Only RECO working / L1 working
     qualityCodes = ROOT.TH1D("QualityCodes", "QualityCodes", 100, -1.5, 98.5)
+    qualityCodesBad = ROOT.TH1D("QualityCodesBad", "QualityCodesBad", 100, -1.5, 98.5)
     qualityCodes2d = ROOT.TH2D("Quality Codes 2D", "Quality Codes 2D", 20, -10.5, 9.5, 10, -5.5, 4.5)
-    qualityCodes2dWrong = ROOT.TH2D("Quality Codes 2D Wrong", "Quality Codes 2D Wrong", 20, -10.5, 9.5, 10, -5.5, 4.5)
     realPtVsL1Pt = ROOT.TH2D("Real Pt vs L1 HO Pt", "Real Pt vs L1 HO Pt", 100, 0, 500, 100, 0, 500)
     realPhiVsL1Phi = ROOT.TH2D("Real Phi vs L1 HO Pt", "Real Phi vs L1 HO Pt", 100, -.5, .5, 100, -.5, .5)
     realEtaVsL1Eta = ROOT.TH2D("Real Eta vs L1 HO Pt", "Real Eta vs L1 HO Pt", 100, -.5, .5, 100, -.5, .5)
     recoPositionOfMuons = ROOT.TH2D("Reco Position", "Reco Position", 100, -.5, .5, 628, -1.*math.pi, math.pi)
     genPositionsOfRecMuons = ROOT.TH2D("Gen Position of reconstructed muons", "Gen Position of reconstructed muons", 100, -.5, .5, 628, -1.*math.pi, math.pi)
+    # Failing
+    qualityCodesWrong = ROOT.TH1D("QualityCodes Wrong", "QualityCodes Wrong", 100, -1.5, 98.5)
+    qualityCodes2dWrong = ROOT.TH2D("Quality Codes 2D Wrong", "Quality Codes 2D Wrong", 20, -10.5, 9.5, 10, -5.5, 4.5)
+    realPtVsL1PtWrong = ROOT.TH2D("Real Pt vs L1 HO Pt Wrong", "Real Pt vs L1 HO Pt Wrong", 100, 0, 500, 100, 0, 500)
+    realPhiVsL1PhiWrong = ROOT.TH2D("Real Phi vs L1 HO Pt Wrong", "Real Phi vs L1 HO Pt Wrong", 100, -.5, .5, 100, -.5, .5)
+    realEtaVsL1EtaWrong = ROOT.TH2D("Real Eta vs L1 HO Pt Wrong", "Real Eta vs L1 HO Pt Wrong", 100, -.5, .5, 100, -.5, .5)
+    # Failing but recovered
+    qualityCodesWrongRecovered = ROOT.TH1D("QualityCodes Wrong Recovered", "QualityCodes Wrong Recovered", 100, -1.5, 98.5)
+    realPtVsL1PtWrongRecovered = ROOT.TH2D("Real Pt vs L1 HO Pt Wrong Recovered", "Real Pt vs L1 HO Pt Wrong Recovered", 100, 0, 500, 100, 0, 500)
+    realPhiVsL1PhiWrongRecovered = ROOT.TH2D("Real Phi vs L1 HO Pt Wrong Recovered", "Real Phi vs L1 HO Pt Wrong Recovered", 100, -.5, .5, 100, -.5, .5)
+    realEtaVsL1EtaWrongRecovered = ROOT.TH2D("Real Eta vs L1 HO Pt Wrong Recovered", "Real Eta vs L1 HO Pt Wrong Recovered", 100, -.5, .5, 100, -.5, .5)
     
-
     
     numberOfFails = 0
     numberOfRecoveries = 0
@@ -293,8 +308,13 @@ def analyze(deltaR, relPt, stNum):
     
     for f in range(len(fileList)):
         
-        eventList[f][0].wait()#warten auf beide events event.wait()
-        eventList[f][1].wait()
+        b1 = eventList[f][0].wait(600)#warten auf beide events event.wait()
+        b2 = eventList[f][1].wait(600)
+        
+        if not b1 or not b2:
+            print 'Download error. Ending'
+            break
+        
         print 'Files ', fileList[f][0], ' and ', fileList[f][1], ' are ready... analyzing them'
         
         eventsBad = Events(fileList[f][1]) #sample with dead MB1
@@ -359,39 +379,59 @@ def analyze(deltaR, relPt, stNum):
                 if Utils.isInRange(element):
                     thisTuple = [element, Utils.getMatch(element, badL1Muons, deltaR, relPt), Utils.getMatch(element, goodL1Muons, deltaR, relPt)]
                     l1MuonTuple.append(thisTuple)
-    
+            
+            failEvent = False
             for j in range(len(l1MuonTuple)):
+                
                 element = l1MuonTuple[j]
                 if not element[matchingGoodMuon] == None:
                     if element[matchingBadMuon] == None:
                         if abs(element[recoMuon].eta()) < Utils.getEta(3.85, 1.28):
                             if element[recoMuon].phi() >= -10.*math.pi/180. and element[recoMuon].phi() < 20./180.*math.pi:
                                 numberOfFails = numberOfFails + 1
-                                print 'Event ' + str(i) + ', RECO (gen), pT: ', str(element[recoMuon].pt()), ' eta: ', str(element[recoMuon].eta()), 'phi ', str(element[recoMuon].phi())
-                                if printDigis(phiDigis, thDigis):
-                                    candidates = getMuonCandidates(phiDigis, thDigis, badHoEntries, qualityCodes2d, stNum)
-                                    if candidates:
-                                        numberOfRecEvents = numberOfRecEvents+1
-                                    for c in candidates:
-                                        c.printInfo()
-                                        qualityCodes.Fill(c.quality)
-                                        realPtVsL1Pt.Fill(element[recoMuon].pt(), c.pt)
-                                        realPhiVsL1Phi.Fill(element[recoMuon].phi(), c.phi)
-                                        realEtaVsL1Eta.Fill(element[recoMuon].eta(), c.eta)
-                                        recoPositionOfMuons.Fill(c.eta, c.phi)
-                                        numberOfRecoveries = numberOfRecoveries + 1
-                                    if not candidates:
-                                        qualityCodes.Fill(-1)
-                                    if candidates:
-                                        genPositionsOfRecMuons.Fill(element[recoMuon].eta(), element[recoMuon].phi())
-                                    print '--------------------------- '
-                    else:
-                        if printDigis(phiDigis, thDigis):
-                            candidates = getMuonCandidates(phiDigis, thDigis, badHoEntries, qualityCodes2dWrong, stNum) #change plots!
-                            for c in candidates:
+                                failEvent = True
+                                
+            if failEvent == True:
+                if printDigis(phiDigis, thDigis):
+                    candidates = getMuonCandidates(phiDigis, thDigis, badHoEntries, qualityCodes2d, stNum)
+                        if candidates:
+                            numberOfRecEvents = numberOfRecEvents+1
+                            genPositionsOfRecMuons.Fill(element[recoMuon].eta(), element[recoMuon].phi())
+                        for c in candidates:
+                            c.printInfo()
+                            qualityCodes.Fill(c.quality)
+                            realPtVsL1Pt.Fill(element[recoMuon].pt(), c.pt())
+                            realPhiVsL1Phi.Fill(element[recoMuon].phi(), c.phi())
+                            realEtaVsL1Eta.Fill(element[recoMuon].eta(), c.eta())
+                            recoPositionOfMuons.Fill(c.eta(), c.phi())
+                            numberOfRecoveries = numberOfRecoveries + 1
+                            if not Utils.getMatch(c, goodL1Muons, .3, .5):
+                                qualityCodesBad.Fill(c,quality)
+                        if not candidates:
+                            qualityCodes.Fill(-1)
+                            
+#                                 print 'Event ' + str(i) + ', RECO (gen), pT: ', str(element[recoMuon].pt()), ' eta: ', str(element[recoMuon].eta()), 'phi ', str(element[recoMuon].phi())
+                                
+#                                     print '--------------------------- '
+            else:
+                if printDigis(phiDigis, thDigis):
+                    candidates = getMuonCandidates(phiDigis, thDigis, badHoEntries, qualityCodes2dWrong, stNum) #change plots!
+                    for c in candidates:
+                        if not Utils.getMatch(c, badL1Muons, .3, .5):
+                            if not Utils.getMatch(c, goodL1Muons, .3, .5):
                                 c.printInfo()
-                            if len(c) > 1:
                                 numberOfTooMany = numberOfTooMany + 1
+                                qualityCodesWrong.Fill(c.quality)
+                                realPtVsL1PtWrong.Fill(element[recoMuon].pt(), c.pt())
+                                realPhiVsL1PhiWrong.Fill(element[recoMuon].phi(), c.phi())
+                                realEtaVsL1EtaWrong.Fill(element[recoMuon].eta(), c.eta())
+                            else:
+                                c.printInfo()
+                                numberOfTooMany = numberOfTooMany + 1
+                                qualityCodesWrongRecovered.Fill(c.quality)
+                                realPtVsL1PtWrongRecovered.Fill(element[recoMuon].pt(), c.pt())
+                                realPhiVsL1PhiWrongRecovered.Fill(element[recoMuon].phi(), c.phi())
+                                realEtaVsL1EtaWrongRecovered.Fill(element[recoMuon].eta(), c.eta())
                         
                     
                     # Here we have the muons that are detected in L1 for the working detector, but are not detected in the non working detector anymore
@@ -404,7 +444,8 @@ def analyze(deltaR, relPt, stNum):
     print 'Number of additional fails: ', str(numberOfFails)
     print 'Number of recovered events: ', str(numberOfRecEvents)
     print 'Number of recoveries : ' , str(numberOfRecoveries)
-    save('Quality.root', qualityCodes, realPtVsL1Pt, realPhiVsL1Phi, realEtaVsL1Eta, qualityCodes2d, genPositionsOfRecMuons, recoPositionOfMuons, qualityCodes2dWrong)
+    print 'Number of too many: ', str(numberOfTooMany)
+    save('Quality.root',qualityCodesWrongRecovered,realPtVsL1PtWrongRecovered,realPhiVsL1PhiWrongRecovered,realEtaVsL1EtaWrongRecovered, qualityCodes, realPtVsL1Pt, realPhiVsL1Phi, realEtaVsL1Eta, qualityCodes2d, genPositionsOfRecMuons, recoPositionOfMuons, qualityCodes2dWrong, qualityCodesWrong, realPtVsL1PtWrong, realPhiVsL1PhiWrong, realEtaVsL1EtaWrong, qualityCodesBad)
 #for i in xrange(100):
 analyze(.2, .5, 1)
 
