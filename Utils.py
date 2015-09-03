@@ -38,6 +38,13 @@ class Utils:
         return minMuon
     
     @staticmethod
+    def matchJet(muon, jetList, minR):
+        for element in jetList:
+            if Utils.getDistance(muon, element) < minR:
+                return element
+        return
+    
+    @staticmethod
     def isInRange(l1Muon):
         if(abs(l1Muon.eta()) < Utils.getEta(4.02, 6.61)):
             return True
