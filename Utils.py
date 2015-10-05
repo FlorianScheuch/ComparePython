@@ -32,16 +32,21 @@ class Utils:
         #2**.5*math.pi/36:i
         #print 'NoMatch'
             return 
-        if (muon1.pt()-minMuon.pt())/(minMuon.pt()+muon1.pt()) > relPt:
+        if abs((muon1.pt()-minMuon.pt())/(minMuon.pt()+muon1.pt())) > relPt:
             #print 'NoMatch'
             return
         return minMuon
     
     @staticmethod
     def matchJet(muon, jetList, minR):
+        minRNow = 1000
+        particle = None
         for element in jetList:
-            if Utils.getDistance(muon, element) < minR:
-                return element
+            if Utils.getDistance(muon, element) < minR and Utils.getDistance(muon, element) < minRNow and element.pt() > 5:
+                minRNow = Utils.getDistance(muon, element)
+                particle = element
+        if minRNow < 1000:
+            return particle
         return
     
     @staticmethod
@@ -62,6 +67,17 @@ class Utils:
                     return True
         return False
     
+    @staticmethod
+    def findNearestRecoMuon(c, l1MuonTuple):
+        deltaR = 10
+        el = None
+        for element in l1MuonTuple:
+            if Utils.getDistance(c, element[0]) < deltaR:
+                deltaR = Utils.getDistance(c, element[0])
+                el = element
+        return el
+    
+                    
     @staticmethod
     def translateToIEta(eta):
         val = eta/(2*math.pi/72)

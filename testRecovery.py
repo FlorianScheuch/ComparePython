@@ -19,6 +19,7 @@ cmstools.ROOT.gSystem.Load("libFWCoreFWLite.so")
 cmstools.ROOT.AutoLibraryLoader.enable()
 MAX_NUMBER = 1000 #Events per file
 stNum=1
+isGetHighestCandidate = 1
 download = False
 fileList = []
 for i in range(1,151): # 1,51 101
@@ -41,7 +42,8 @@ phiContainerHandle = Handle('L1MuDTChambPhContainer')
 thContainerHandle = Handle('L1MuDTChambThContainer')
 jetContainerHandle = Handle('std::vector<l1extra::L1JetParticle>')
 pfJetContainerHandle = Handle('std::vector<reco::PFJet>')
-rpcDigiContainerHandle = Handle('edm::RangeMap<RPCDetId,edm::OwnVector<RPCRecHit,edm::ClonePolicy<RPCRecHit> >,edm::ClonePolicy<RPCRecHit> >')
+pfCandidateHandle = Handle('vector<reco::PFCandidate>')
+rpcDigiContainerHandle = Handle('vector<L1MuRegionalCand>')
 #phiContainerHandle = Handle('L1MuDTChambPhContainer')
 # a label is just a tuple of strings that is initialized justvector<reco::GenParticle>
 # like and edm::InputTag
@@ -53,7 +55,8 @@ labelThContainer = ("dttfDigis")
 labelGenParticles = ("genParticles")
 labelJetContainer = ("l1extraParticles", "Central", "HLT") #, "Central", "HLT"
 labelPfJetContainer = ('ak5PFJets')
-labelRpcDigiContainer = ('rpcRecHits')
+labelPfCandidate = ('particleFlow')
+labelRpcDigiContainer = ("gtDigis", "RPCb", "HLT") #, "Central", "HLT
 
 #print Utils.getEta(4.02, 6.61) #Straight line from center to end of station 1 in wheel 2
 #print Utils.getEta(7.38, 6.61) #Straight line from center to end of station 4 in wheel 2
@@ -245,6 +248,7 @@ def getPhiFromDigi(phDigi):
         phi = -1.*phi
     phi = phi -.14 #Shift of DT station
     scTransition = scNum-((scNum/7)*-12)-1
+    phi = phi+.174532925 #pi/36*2
     return (phi+(scTransition*math.pi/6.))
     
     # Return phi from digi
@@ -386,6 +390,10 @@ def analyze(deltaR, relPt, stNum, download):
     realPhiVsL1PhiRecoNoL1 = ROOT.TH1D("Real Phi vs L1 HO Pt RecoNoL1", "Real Phi vs L1 HO Pt RecoNoL1", 100, -.5, .5)
     realEtaVsL1EtaRecoNoL1 = ROOT.TH1D("Real Eta vs L1 HO Pt RecoNoL1", "Real Eta vs L1 HO Pt RecoNoL1", 100, -.5, .5)
     
+    wrongCandidateEtaPhi  = ROOT.TH2D("Eta phi of wrong L1 HO muon candidates", "Eta phi of wrong L1 HO muon candidates", 30, -1.*Utils.getEta(4.02, 6.61), Utils.getEta(4.02, 6.61), 72, -1*math.pi, math.pi)
+    
+    pdgIdOfMatchingParticle = ROOT.TH1D("pdgId of matching PF Candidate", "pdgId of matching PF Candidate", 10000, -4999.5, 5000.5)
+    
     
     numberOfFails = 0
     numberOfRecoveries = 0
@@ -447,11 +455,14 @@ def analyze(deltaR, relPt, stNum, download):
             badEvent.getByLabel(labelJetContainer, jetContainerHandle)
             jetContainer = jetContainerHandle.product()
             
+            goodEvent.getByLabel(labelPfCandidate, pfCandidateHandle)
+            pfCandidateContainer = pfCandidateHandle.product()
+        
             badEvent.getByLabel(labelRpcDigiContainer, rpcDigiContainerHandle)
             rpcDigiContainer = rpcDigiContainerHandle.product()
             
-            return
-            
+            #return
+             
             #badEvent.getByLabel(labelPfJetContainer, pfJetContainerHandle)
             #jetContainer = pfJetContainerHandle.product()
             
@@ -501,8 +512,11 @@ def analyze(deltaR, relPt, stNum, download):
                         numberOfRecEvents = numberOfRecEvents+1
                         genPositionsOfRecMuons.Fill(element[recoMuon].eta(), element[recoMuon].phi())
                     for c in candidates:
-                        c.printInfo()
+#                         c.printInfo()
                         qualityCodes.Fill(c.quality)
+                        element = Utils.findNearestRecoMuon(c, l1MuonTuple)
+                        if not element:
+                            continue
                         realPtVsL1PtOA.Fill(element[recoMuon].pt(), c.pt())
                         realPhiVsL1PhiOA.Fill(element[recoMuon].phi(), c.phi())
                         realEtaVsL1EtaOA.Fill(element[recoMuon].eta(), c.eta())
@@ -523,25 +537,42 @@ def analyze(deltaR, relPt, stNum, download):
             else:
                 if printDigis(phiDigis, thDigis):
                     candidates = getMuonCandidates(phiDigis, thDigis, badHoEntries, qualityCodes2dWrong, stNum) #change plots!
+                    pT = 0
+                    
+                    if isGetHighestCandidate == 1:
+                        for c in candidates:
+                            if c.pt() > pT:
+                                #print "c.pt " , str(c.pt()) , " highPT " , str(pT)
+                                highestCandidate = c
+                                pT = c.pt()
+                            
+                    
+                        candidates = []
+                        if pT > 0:
+                            candidates.append(highestCandidate)
+                    
                     for c in candidates:
                         if not Utils.getMatch(c, badL1Muons, .3, .5):
                             if not Utils.getMatch(c, goodL1Muons, .3, .5):
-                                if Utils.getMatch(c, goodRecoMuons, .3, .5) or Utils.getMatch(c, genParticles, .2, .5) or Utils.matchJet(c, jetContainer, .3):
-                                    if Utils.matchJet(c, jetContainer, .3):
-                                        jet = Utils.matchJet(c, jetContainer, .3)
+                                if Utils.getMatch(c, goodRecoMuons, .3, .5) or Utils.getMatch(c, genParticles, .2, .5) or Utils.matchJet(c, pfCandidateContainer, .25):
+                                    if Utils.matchJet(c, pfCandidateContainer, .5):
+                                        jet = Utils.matchJet(c, pfCandidateContainer, .3)
                                         matchingJetEnergy.Fill(jet.energy())
-                                        print 'Matching jet: ', str(jet.energy())
-                                    c.printInfo()
+                                        pdgIdOfMatchingParticle.Fill(jet.pdgId())
+                                        print 'Matching jet: ', str(jet.energy()), ' pdgId: ', str(jet.pdgId()), ' phi: ', str(c.phi()-jet.phi()), ' eta: ' , str(c.eta()-jet.eta())
+#                                     c.printInfo()
                                     qualityCodesRecoNoL1.Fill(c.quality)
                                     realPtVsL1PtRecoNoL1.Fill(c.pt())
                                     realPhiVsL1PhiRecoNoL1.Fill(c.phi())
                                     realEtaVsL1EtaRecoNoL1.Fill(c.eta())
                                 else:
-                                    c.printInfo()
+#                                     c.printInfo()
                                     qualityCodesWrong.Fill(c.quality)
                                     realPtVsL1PtWrong.Fill(c.pt())
                                     realPhiVsL1PhiWrong.Fill(c.phi())
                                     realEtaVsL1EtaWrong.Fill(c.eta())
+                                    if c.quality > 5:
+                                        wrongCandidateEtaPhi.Fill(c.eta(), c.phi())
                                     numberOfTooMany = numberOfTooMany + 1
                                     tooManyEvent = True
                                     print 'File: ', str(f+1), ' Event: ' , str(i)
@@ -569,7 +600,7 @@ def analyze(deltaR, relPt, stNum, download):
     print 'Number of recoveries : ' , str(numberOfRecoveries)
     print 'Number of too many: ', str(numberOfTooMany)
     print 'Number of events with too many: ', str(tooManyEventCounter)
-    save('Quality.root',matchingJetEnergy, hoOccupancy, qualityCodesRecoNoL1,realPtVsL1PtRecoNoL1,realPtVsL1PtOA,realPhiVsL1PhiOA,realEtaVsL1EtaOA, realPhiVsL1PhiRecoNoL1, realEtaVsL1EtaRecoNoL1, qualityCodesWrongRecovered,realPtVsL1PtWrongRecovered,realPhiVsL1PhiWrongRecovered,realEtaVsL1EtaWrongRecovered, qualityCodes, realPtVsL1Pt[0], realPtVsL1Pt[1], realPtVsL1Pt[2], realPtVsL1Pt[3], realPtVsL1Pt[4], realPtVsL1Pt[5], realPtVsL1Pt[6], realPtVsL1Pt[7], qualityCodes2d, realPhiVsL1Phi[0], realPhiVsL1Phi[1], realPhiVsL1Phi[2], realPhiVsL1Phi[3], realPhiVsL1Phi[4], realPhiVsL1Phi[5], realPhiVsL1Phi[6], realPhiVsL1Phi[7], genPositionsOfRecMuons, realEtaVsL1Eta[0], realEtaVsL1Eta[1], realEtaVsL1Eta[2], realEtaVsL1Eta[3], realEtaVsL1Eta[4], realEtaVsL1Eta[5], realEtaVsL1Eta[6], realEtaVsL1Eta[7], recoPositionOfMuons, qualityCodes2dWrong, qualityCodesWrong, realPtVsL1PtWrong, realPhiVsL1PhiWrong, realEtaVsL1EtaWrong, qualityCodesBad)
+    save('Quality.root',pdgIdOfMatchingParticle, wrongCandidateEtaPhi,matchingJetEnergy, hoOccupancy, qualityCodesRecoNoL1,realPtVsL1PtRecoNoL1,realPtVsL1PtOA,realPhiVsL1PhiOA,realEtaVsL1EtaOA, realPhiVsL1PhiRecoNoL1, realEtaVsL1EtaRecoNoL1, qualityCodesWrongRecovered,realPtVsL1PtWrongRecovered,realPhiVsL1PhiWrongRecovered,realEtaVsL1EtaWrongRecovered, qualityCodes, realPtVsL1Pt[0], realPtVsL1Pt[1], realPtVsL1Pt[2], realPtVsL1Pt[3], realPtVsL1Pt[4], realPtVsL1Pt[5], realPtVsL1Pt[6], realPtVsL1Pt[7], qualityCodes2d, realPhiVsL1Phi[0], realPhiVsL1Phi[1], realPhiVsL1Phi[2], realPhiVsL1Phi[3], realPhiVsL1Phi[4], realPhiVsL1Phi[5], realPhiVsL1Phi[6], realPhiVsL1Phi[7], genPositionsOfRecMuons, realEtaVsL1Eta[0], realEtaVsL1Eta[1], realEtaVsL1Eta[2], realEtaVsL1Eta[3], realEtaVsL1Eta[4], realEtaVsL1Eta[5], realEtaVsL1Eta[6], realEtaVsL1Eta[7], recoPositionOfMuons, qualityCodes2dWrong, qualityCodesWrong, realPtVsL1PtWrong, realPhiVsL1PhiWrong, realEtaVsL1EtaWrong, qualityCodesBad)
 #for i in xrange(100):
 analyze(.2, .5, 1, 0)
 

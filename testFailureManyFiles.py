@@ -3,7 +3,11 @@ import math
 from DataFormats.FWLite import Events, Handle
 from Utils import *
 
-MAX_NUMBER = 24000
+MAX_NUMBER = 1000
+
+fileList = []
+for i in range(1,151): # 1,51 101
+    fileList.append(['FEVT_WorkingDetector'+str(i)+'.root', 'FEVT_NonWorkingDetector'+str(i)+'.root'])
 
 numberOfGoodNonBadByDeltaRPileUp = ROOT.TH1D ("numberOfGoodNonBadByDeltaRPileUp", "numberOfGoodNonBadByDeltaRPileUp", 100, -.005, .995)
 numberOfNonGoodBadByDeltaRPileUp = ROOT.TH1D ("numberOfNonGoodBadByDeltaRPileUp", "numberOfNonGoodBadByDeltaRPileUp", 100, -.005, .995)
@@ -16,7 +20,7 @@ numberOfNonGoodNonBadByDeltaRPileUpGen = ROOT.TH1D ("numberOfNonGoodNonBadByDelt
 numberOfGoodBadByDeltaRPileUpGen = ROOT.TH1D ("numberOfGoodBadByDeltaRPileUpGen", "numberOfGoodBadByDeltaRPileUpGen", 100, -.005, .995)
 
 deltaZ = ROOT.TH1D("Delta z position", "Delta z position", 100, -1, 1)
-eventsBad = Events ('FEVT_NonWorkingDetector.root')
+eventsBad = Events ('FEVT_NonWorkingDetectorStation2.root')
 eventsGood = Events ('FEVT_WorkingDetector.root')
 
 # create handle outside of loop
@@ -51,11 +55,7 @@ def save(name, *plot):
 def analyze(deltaR, relPt):
     # deltaR: DeltaR of the matching cone
     # relPt: allowed relative pT deviation (1 = no deviation, 0 = infinit deviation)
-    eventsBad.toBegin()
-    eventsGood.toBegin()
-    
-    eventsGood_iter = eventsGood.__iter__()
-    eventsBad_iter = eventsBad.__iter__()
+
     
     ROOT.gROOT.SetStyle('Plain') # white background
     
@@ -67,7 +67,7 @@ def analyze(deltaR, relPt):
     
     allWorkingRecoMuonsPt = ROOT.TH1D ("Pt of all working RECO muons with L1 match working", "Pt of all working RECO muons with L1 match working", 1000, 0, 100)
     allWorkingRecoMuons = ROOT.TH2D("Eta phi of all RECO muons with l1 muons match good detector", "Eta phi of all RECO muons with l1 muons match good detector", 30, -1.*Utils.getEta(4.02, 6.61), Utils.getEta(4.02, 6.61), 72, -1*math.pi, math.pi)
-    
+
     allNonWorkingRecoMuonsGoodPt = ROOT.TH1D ("Pt of all non working RECO muons with L1 match good", "Pt of all non working RECO muons with L1 match good", 1000, 0, 100)
     allNonWorkingRecoMuonsGood = ROOT.TH2D("Eta phi of not matching Reco muons to l1 muons good detector", "Eta phi of not matching Reco muons to l1 muons good detector", 30, -1.*Utils.getEta(4.02, 6.61), Utils.getEta(4.02, 6.61), 72, -1*math.pi, math.pi)
     # Only RECO non working / L1 non working
@@ -109,120 +109,133 @@ def analyze(deltaR, relPt):
     numberOfGoodNonBadGen = 0
     numberOfGoodBadGen = 0
     
-    for i in xrange(MAX_NUMBER):
-        print str(i)
-        # GET THE EVENTS
-        badEvent = eventsBad_iter.next()
-        goodEvent = eventsGood_iter.next()
-        
-        # GET THE HANDLES
-        badEvent.getByLabel(label,badMuonsHandle)
-        badRecoMuons = badMuonsHandle.product()
     
-        goodEvent.getByLabel(labelGenParticles, genParticlesHandle)
-        genParticles = genParticlesHandle.product()
-        
-        badEvent.getByLabel(labelL1, badL1MuonsHandle)
-        badL1Muons = badL1MuonsHandle.product()
-        
-        goodEvent.getByLabel(label,goodMuonsHandle)
-        goodRecoMuons = goodMuonsHandle.product()
-
-        goodEvent.getByLabel(labelL1, goodL1MuonsHandle)
-        goodL1Muons = goodL1MuonsHandle.product()
-        
-        badEvent.getByLabel(labelHoEntries, hoEntriesHandle)
-        badHoEntries = hoEntriesHandle.product()
+    for f in range(len(fileList)):
+        print 'File: ', str(f)
     
-        badEvent.getByLabel(labelPhiContainer, phiContainerHandle)
-        phiContainer = phiContainerHandle.product()
-        #----- END GET THE HANDLES -----
+        eventsBad = Events(fileList[f][1]) #sample with dead MB1
+        eventsGood = Events(fileList[f][0])
     
-        l1MuonTuple = []
-        
-        recoMuon = 0
-        matchingBadMuon = 1
-        matchingGoodMuon = 2
-        
-        matchedToGenRecoMuon = Utils.getMatch(genParticles[0], goodRecoMuons, .1, .7)
-        #print matchedToGenRecoMuon, " Matched to"
-        
-        for element in goodRecoMuons:
-            if Utils.isInRange(element):
-                deltaZ.Fill(element.vz())
-                allRecoMuons.Fill(element.eta(), element.phi())
-                allRecoMuonsPt.Fill(element.pt())
-                thisTuple = [element, Utils.getMatch(element, badL1Muons, deltaR, relPt), Utils.getMatch(element, goodL1Muons, deltaR, relPt)]
-                l1MuonTuple.append(thisTuple)
+        eventsBad.toBegin()
+        eventsGood.toBegin()
     
-        for j in range(len(l1MuonTuple)):
-            element = l1MuonTuple[j]
-            if element[matchingGoodMuon] == None:
-                allNonWorkingRecoMuonsGoodPt.Fill(element[recoMuon].pt())
-                allNonWorkingRecoMuonsGood.Fill(element[recoMuon].eta(), element[recoMuon].phi())
-                if not element[matchingBadMuon] == None:
-                    diffGhostsEtaPhi.Fill(element[recoMuon].eta(), element[recoMuon].phi())
-            else:
-                allWorkingRecoMuonsPt.Fill(element[recoMuon].pt())
-                allWorkingRecoMuons.Fill(element[recoMuon].eta(), element[recoMuon].phi())
+        eventsGood_iter = eventsGood.__iter__()
+        eventsBad_iter = eventsBad.__iter__()
+    
+        for i in xrange(MAX_NUMBER):
+            #print str(i)
+            # GET THE EVENTS
+            badEvent = eventsBad_iter.next()
+            goodEvent = eventsGood_iter.next()
+            
+            # GET THE HANDLES
+            badEvent.getByLabel(label,badMuonsHandle)
+            badRecoMuons = badMuonsHandle.product()
+        
+            goodEvent.getByLabel(labelGenParticles, genParticlesHandle)
+            genParticles = genParticlesHandle.product()
+            
+            badEvent.getByLabel(labelL1, badL1MuonsHandle)
+            badL1Muons = badL1MuonsHandle.product()
+            
+            goodEvent.getByLabel(label,goodMuonsHandle)
+            goodRecoMuons = goodMuonsHandle.product()
+    
+            goodEvent.getByLabel(labelL1, goodL1MuonsHandle)
+            goodL1Muons = goodL1MuonsHandle.product()
+            
+            badEvent.getByLabel(labelHoEntries, hoEntriesHandle)
+            badHoEntries = hoEntriesHandle.product()
+        
+            badEvent.getByLabel(labelPhiContainer, phiContainerHandle)
+            phiContainer = phiContainerHandle.product()
+            #----- END GET THE HANDLES -----
+        
+            l1MuonTuple = []
+            
+            recoMuon = 0
+            matchingBadMuon = 1
+            matchingGoodMuon = 2
+            
+            matchedToGenRecoMuon = Utils.getMatch(genParticles[0], goodRecoMuons, .1, .7)
+            #print matchedToGenRecoMuon, " Matched to"
+            
+            for element in goodRecoMuons:
+                if Utils.isInRange(element):
+                    deltaZ.Fill(element.vz())
+                    allRecoMuons.Fill(element.eta(), element.phi())
+                    allRecoMuonsPt.Fill(element.pt())
+                    thisTuple = [element, Utils.getMatch(element, badL1Muons, deltaR, relPt), Utils.getMatch(element, goodL1Muons, deltaR, relPt)]
+                    l1MuonTuple.append(thisTuple)
+        
+            for j in range(len(l1MuonTuple)):
+                element = l1MuonTuple[j]
+                if element[matchingGoodMuon] == None:
+                    allNonWorkingRecoMuonsGoodPt.Fill(element[recoMuon].pt())
+                    allNonWorkingRecoMuonsGood.Fill(element[recoMuon].eta(), element[recoMuon].phi())
+                    if not element[matchingBadMuon] == None:
+                        diffGhostsEtaPhi.Fill(element[recoMuon].eta(), element[recoMuon].phi())
+                else:
+                    allWorkingRecoMuonsPt.Fill(element[recoMuon].pt())
+                    allWorkingRecoMuons.Fill(element[recoMuon].eta(), element[recoMuon].phi())
+                    if element[matchingBadMuon] == None:
+                        # Here we have the muons that are detected in L1 for the working detector, but are not detected in the non working detector anymore
+                        # element[recoMuon] is the corresponding RECO muon (meaning the 'GEN' muon)
+                        numberOfAdditionals = numberOfAdditionals + 1
+                        diffFailsEtaPhi.Fill(element[recoMuon].eta(), element[recoMuon].phi())
+                        
+                        hoEntry = Utils.getHoEntry(Utils.translateToIPhi(element[recoMuon].phi()), Utils.translateToIEta(element[recoMuon].eta()), badHoEntries)
+                        highestEnergy3Phi = Utils.getHighestHoEntry3(Utils.translateToIPhi(element[recoMuon].phi()), Utils.translateToIEta(element[recoMuon].eta()), badHoEntries)
+                        hoEntryPlot3Phi.Fill(highestEnergy3Phi)
+                        if highestEnergy3Phi > 0.2:
+                            numberOfHighHOEntries3Phi = numberOfHighHOEntries3Phi + 1
+                        if hoEntry != None:
+                            if hoEntry.energy() > 0.2:
+                                numberOfHighHOEntries = numberOfHighHOEntries + 1
+                            #print hoEntry.energy()
+                            #print 'phi: ', Utils.translateToIEta(element[recoMuon].eta()) , ' phi: ', Utils.translateToIPhi(element[recoMuon].phi())
+                            hoEntryPlot.Fill(hoEntry.energy())
+                        else:
+                            #print '000'
+                            #print 'phi: ', Utils.translateToIEta(element[recoMuon].eta()) , ' phi: ', Utils.translateToIPhi(element[recoMuon].phi())
+                            hoEntryPlot.Fill(0)
+         
+            for element in l1MuonTuple:
                 if element[matchingBadMuon] == None:
-                    # Here we have the muons that are detected in L1 for the working detector, but are not detected in the non working detector anymore
-                    # element[recoMuon] is the corresponding RECO muon (meaning the 'GEN' muon)
-                    numberOfAdditionals = numberOfAdditionals + 1
-                    diffFailsEtaPhi.Fill(element[recoMuon].eta(), element[recoMuon].phi())
-                    
-                    hoEntry = Utils.getHoEntry(Utils.translateToIPhi(element[recoMuon].phi()), Utils.translateToIEta(element[recoMuon].eta()), badHoEntries)
-                    highestEnergy3Phi = Utils.getHighestHoEntry3(Utils.translateToIPhi(element[recoMuon].phi()), Utils.translateToIEta(element[recoMuon].eta()), badHoEntries)
-                    hoEntryPlot3Phi.Fill(highestEnergy3Phi)
-                    if highestEnergy3Phi > 0.2:
-                        numberOfHighHOEntries3Phi = numberOfHighHOEntries3Phi + 1
-                    if hoEntry != None:
-                        if hoEntry.energy() > 0.2:
-                            numberOfHighHOEntries = numberOfHighHOEntries + 1
-                        #print hoEntry.energy()
-                        #print 'phi: ', Utils.translateToIEta(element[recoMuon].eta()) , ' phi: ', Utils.translateToIPhi(element[recoMuon].phi())
-                        hoEntryPlot.Fill(hoEntry.energy())
+                    allNonWorkingRecoMuonsBadPt.Fill(element[recoMuon].pt())
+                    allNonWorkingRecoMuonsBad.Fill(element[recoMuon].eta(), element[recoMuon].phi())
+                 
+                 ########### Controll Plots   
+            for j in range(len(l1MuonTuple)):
+                element = l1MuonTuple[j]
+                if element[matchingBadMuon] == None:
+                    if element[matchingGoodMuon] == None:
+                        NGoodNBadPt.Fill(element[recoMuon].pt())
+                        if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
+                            numberOfNonGoodNonBadGen = numberOfNonGoodNonBadGen + 1
+                        else:
+                            numberOfNonGoodNonBad = numberOfNonGoodNonBad + 1
                     else:
-                        #print '000'
-                        #print 'phi: ', Utils.translateToIEta(element[recoMuon].eta()) , ' phi: ', Utils.translateToIPhi(element[recoMuon].phi())
-                        hoEntryPlot.Fill(0)
-     
-        for element in l1MuonTuple:
-            if element[matchingBadMuon] == None:
-                allNonWorkingRecoMuonsBadPt.Fill(element[recoMuon].pt())
-                allNonWorkingRecoMuonsBad.Fill(element[recoMuon].eta(), element[recoMuon].phi())
-             
-             ########### Controll Plots   
-        for j in range(len(l1MuonTuple)):
-            element = l1MuonTuple[j]
-            if element[matchingBadMuon] == None:
-                if element[matchingGoodMuon] == None:
-                    NGoodNBadPt.Fill(element[recoMuon].pt())
-                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
-                        numberOfNonGoodNonBadGen = numberOfNonGoodNonBadGen + 1
-                    else:
-                        numberOfNonGoodNonBad = numberOfNonGoodNonBad + 1
+                        YGoodNBadPt.Fill(element[recoMuon].pt())
+                        if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
+                            numberOfGoodNonBadGen = numberOfGoodNonBadGen + 1
+                        else:
+                            numberOfGoodNonBad = numberOfGoodNonBad + 1
                 else:
-                    YGoodNBadPt.Fill(element[recoMuon].pt())
-                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
-                        numberOfGoodNonBadGen = numberOfGoodNonBadGen + 1
+                    if element[matchingGoodMuon] == None:
+                        #print i
+                        NGoodYBadPt.Fill(element[recoMuon].pt())
+                        if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
+                            numberOfNonGoodBadGen = numberOfNonGoodBadGen + 1
+                        else:
+                            numberOfNonGoodBad = numberOfNonGoodBad + 1
                     else:
-                        numberOfGoodNonBad = numberOfGoodNonBad + 1
-            else:
-                if element[matchingGoodMuon] == None:
-                    #print i
-                    NGoodYBadPt.Fill(element[recoMuon].pt())
-                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
-                        numberOfNonGoodBadGen = numberOfNonGoodBadGen + 1
-                    else:
-                        numberOfNonGoodBad = numberOfNonGoodBad + 1
-                else:
-                    YGoodYBadPt.Fill(element[recoMuon].pt())
-                    if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
-                        numberOfGoodBadGen = numberOfGoodBadGen + 1
-                    else:
-                        numberOfGoodBad = numberOfGoodBad + 1
-    ###### PLOTTING ######
+                        YGoodYBadPt.Fill(element[recoMuon].pt())
+                        if Utils.isSame(element[recoMuon], matchedToGenRecoMuon):
+                            numberOfGoodBadGen = numberOfGoodBadGen + 1
+                        else:
+                            numberOfGoodBad = numberOfGoodBad + 1
+        ###### PLOTTING ######
            
     lowerPhi = -1*math.atan(65./355.)
     upperPhi = math.atan(126./355.)
