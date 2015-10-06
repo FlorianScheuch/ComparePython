@@ -23,6 +23,9 @@ class Utils:
         if len(muonList) == 0 :
             return
         minMuon = muonList[0]
+        minDist = Utils.getDistance(muon1, minMuon)
+        
+        
         for element in muonList:
             if Utils.getDistance(muon1, element) < minDist:
                 minDist = Utils.getDistance(muon1, element)
