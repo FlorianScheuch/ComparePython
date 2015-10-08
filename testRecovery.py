@@ -19,7 +19,7 @@ cmstools.ROOT.gSystem.Load("libFWCoreFWLite.so")
 cmstools.ROOT.AutoLibraryLoader.enable()
 MAX_NUMBER = 1000 #Events per file
 stNum=1
-isGetHighestCandidate = 1
+isGetHighestCandidate = 0
 download = False
 fileList = []
 for i in range(1,151): # 1,51 101
@@ -184,30 +184,36 @@ def matchesHO(phDigi, thDigi, hoEntries, qualityCodes2d): #DONE
                     ieta = -1*ieta
 
 #     print 'Muon expected at phi: ', str(iphi), ' eta: ', str(ieta) 
+    highestReturnCode = -1
     for i in range(hoEntries.size()):
         bg = hoEntries.__getitem__(i)
-        if bg.energy() > .2 and bg.energy() < 1.5:
+        if bg.energy() > .2:
             detId = bg.id()
             if detId.iphi() == iphi:
                 testEta = detId.ieta()
-                if testEta > 0:
+                if testEta > 0: #Anpassung durch fehlendes ieta 0
                     testEta = testEta-1
                 if testEta == ieta:
                     qualityCodes2d.Fill(0,0)
-                    return 7
+                    if highestReturnCode < 7:
+                        highestReturnCode = 7
                 if testEta == ieta - 1:
                     qualityCodes2d.Fill(-1,0)
-                    return 6
+                    if highestReturnCode < 6:
+                        highestReturnCode = 6
                 if testEta == ieta + 1:
                     qualityCodes2d.Fill(1,0)
-                    return 6
+                    if highestReturnCode < 6:
+                        highestReturnCode = 6
                 for j in range(-4,4):
                     if testEta == j:
                         qualityCodes2d.Fill(testEta-ieta, 0)
-                        return 5
+                        if highestReturnCode < 5:
+                        highestReturnCode = 5
                 if ieta == -20: #Falls keine info fuer eta da ist
                     qualityCodes2d.Fill(-10, 0)
-                    return 4
+                    if highestReturnCode < 4:
+                        highestReturnCode = 4
             for xphi in xrange(3):
                 nphi = (((detId.iphi()-1) + 72 - 1 + xphi)%72) + 1
                 if nphi == iphi:
@@ -216,22 +222,27 @@ def matchesHO(phDigi, thDigi, hoEntries, qualityCodes2d): #DONE
                         testEta = testEta-1
                     if testEta == ieta:
                         qualityCodes2d.Fill(0 , xphi-1)
-                        return 3
+                        if highestReturnCode < 3:
+                        highestReturnCode = 3
                     if testEta == ieta - 1:
                         qualityCodes2d.Fill(-1, xphi-1)
-                        return 2
+                        if highestReturnCode < 2:
+                        highestReturnCode = 2
                     if testEta == ieta + 1:
                         qualityCodes2d.Fill(1, xphi-1)
-                        return 2
+                        if highestReturnCode < 2:
+                        highestReturnCode = 2
                     for j in range(-4,4):
                         if testEta == j:
                             qualityCodes2d.Fill(testEta-ieta, xphi-1)
-                            return 1
+                            if highestReturnCode < 1:
+                        highestReturnCode = 1
                     if ieta == -20: #Falls keine info fuer eta da ist
                         qualityCodes2d.Fill(-10, xphi-1)
-                        return 0
+                        if highestReturnCode < 0:
+                        highestReturnCode = 0
                 
-    return -1
+    return highestReturnCode
 
     # Falls ieta == -20, dann gibt es keinen eta eintrag
     # Falls vorhanden gucke in iphi und ieta im intervall 3 nach einem eintrag ueber threshold
@@ -391,7 +402,7 @@ def analyze(deltaR, relPt, stNum, download):
     realEtaVsL1EtaRecoNoL1 = ROOT.TH1D("Real Eta vs L1 HO Pt RecoNoL1", "Real Eta vs L1 HO Pt RecoNoL1", 100, -.5, .5)
     
     wrongCandidateEtaPhi  = ROOT.TH2D("Eta phi of wrong L1 HO muon candidates", "Eta phi of wrong L1 HO muon candidates", 30, -1.*Utils.getEta(4.02, 6.61), Utils.getEta(4.02, 6.61), 72, -1*math.pi, math.pi)
-    
+    correctCandidateEtaPhi  = ROOT.TH2D("Eta phi of correct L1 HO muon candidates", "Eta phi of correct L1 HO muon candidates", 30, -1.*Utils.getEta(4.02, 6.61), Utils.getEta(4.02, 6.61), 72, -1*math.pi, math.pi)
     pdgIdOfMatchingParticle = ROOT.TH1D("pdgId of matching PF Candidate", "pdgId of matching PF Candidate", 10000, -4999.5, 5000.5)
     
     
@@ -525,6 +536,8 @@ def analyze(deltaR, relPt, stNum, download):
                             realPhiVsL1Phi[c.quality].Fill(element[recoMuon].phi(), c.phi())
                             realEtaVsL1Eta[c.quality].Fill(element[recoMuon].eta(), c.eta())
                         recoPositionOfMuons.Fill(c.eta(), c.phi())
+                        if c.quality > 5:
+                            correctCandidateEtaPhi.Fill(c.eta(), c.phi())
                         numberOfRecoveries = numberOfRecoveries + 1
                         if not Utils.getMatch(c, goodL1Muons, .3, .5):
                             qualityCodesBad.Fill(c.quality)
@@ -603,7 +616,7 @@ def analyze(deltaR, relPt, stNum, download):
     print 'Number of recoveries : ' , str(numberOfRecoveries)
     print 'Number of too many: ', str(numberOfTooMany)
     print 'Number of events with too many: ', str(tooManyEventCounter)
-    save('Quality.root',pdgIdOfMatchingParticle, wrongCandidateEtaPhi,matchingJetEnergy, hoOccupancy, qualityCodesRecoNoL1,realPtVsL1PtRecoNoL1,realPtVsL1PtOA,realPhiVsL1PhiOA,realEtaVsL1EtaOA, realPhiVsL1PhiRecoNoL1, realEtaVsL1EtaRecoNoL1, qualityCodesWrongRecovered,realPtVsL1PtWrongRecovered,realPhiVsL1PhiWrongRecovered,realEtaVsL1EtaWrongRecovered, qualityCodes, realPtVsL1Pt[0], realPtVsL1Pt[1], realPtVsL1Pt[2], realPtVsL1Pt[3], realPtVsL1Pt[4], realPtVsL1Pt[5], realPtVsL1Pt[6], realPtVsL1Pt[7], qualityCodes2d, realPhiVsL1Phi[0], realPhiVsL1Phi[1], realPhiVsL1Phi[2], realPhiVsL1Phi[3], realPhiVsL1Phi[4], realPhiVsL1Phi[5], realPhiVsL1Phi[6], realPhiVsL1Phi[7], genPositionsOfRecMuons, realEtaVsL1Eta[0], realEtaVsL1Eta[1], realEtaVsL1Eta[2], realEtaVsL1Eta[3], realEtaVsL1Eta[4], realEtaVsL1Eta[5], realEtaVsL1Eta[6], realEtaVsL1Eta[7], recoPositionOfMuons, qualityCodes2dWrong, qualityCodesWrong, realPtVsL1PtWrong, realPhiVsL1PhiWrong, realEtaVsL1EtaWrong, qualityCodesBad)
+    save('Quality.root',correctCandidateEtaPhi, pdgIdOfMatchingParticle, wrongCandidateEtaPhi,matchingJetEnergy, hoOccupancy, qualityCodesRecoNoL1,realPtVsL1PtRecoNoL1,realPtVsL1PtOA,realPhiVsL1PhiOA,realEtaVsL1EtaOA, realPhiVsL1PhiRecoNoL1, realEtaVsL1EtaRecoNoL1, qualityCodesWrongRecovered,realPtVsL1PtWrongRecovered,realPhiVsL1PhiWrongRecovered,realEtaVsL1EtaWrongRecovered, qualityCodes, realPtVsL1Pt[0], realPtVsL1Pt[1], realPtVsL1Pt[2], realPtVsL1Pt[3], realPtVsL1Pt[4], realPtVsL1Pt[5], realPtVsL1Pt[6], realPtVsL1Pt[7], qualityCodes2d, realPhiVsL1Phi[0], realPhiVsL1Phi[1], realPhiVsL1Phi[2], realPhiVsL1Phi[3], realPhiVsL1Phi[4], realPhiVsL1Phi[5], realPhiVsL1Phi[6], realPhiVsL1Phi[7], genPositionsOfRecMuons, realEtaVsL1Eta[0], realEtaVsL1Eta[1], realEtaVsL1Eta[2], realEtaVsL1Eta[3], realEtaVsL1Eta[4], realEtaVsL1Eta[5], realEtaVsL1Eta[6], realEtaVsL1Eta[7], recoPositionOfMuons, qualityCodes2dWrong, qualityCodesWrong, realPtVsL1PtWrong, realPhiVsL1PhiWrong, realEtaVsL1EtaWrong, qualityCodesBad)
 #for i in xrange(100):
 analyze(.2, .5, 1, 0)
 
