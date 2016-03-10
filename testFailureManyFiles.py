@@ -6,8 +6,8 @@ from Utils import *
 MAX_NUMBER = 1000
 
 fileList = []
-for i in range(1,151): # 1,51 101
-    fileList.append(['FEVT_WorkingDetector'+str(i)+'.root', 'FEVT_NonWorkingDetector'+str(i)+'.root'])
+for i in range(76,125): # 1,51 101
+    fileList.append(['dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/Working2/FEVT_WorkingDetector'+str(i)+'.root', 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/NonWorking2/FEVT_NonWorkingDetector'+str(i)+'.root'])
 
 numberOfGoodNonBadByDeltaRPileUp = ROOT.TH1D ("numberOfGoodNonBadByDeltaRPileUp", "numberOfGoodNonBadByDeltaRPileUp", 100, -.005, .995)
 numberOfNonGoodBadByDeltaRPileUp = ROOT.TH1D ("numberOfNonGoodBadByDeltaRPileUp", "numberOfNonGoodBadByDeltaRPileUp", 100, -.005, .995)
@@ -111,7 +111,7 @@ def analyze(deltaR, relPt):
     
     
     for f in range(len(fileList)):
-        print 'File: ', str(f)
+        print 'File: ', str(fileList[f][0])
     
         eventsBad = Events(fileList[f][1]) #sample with dead MB1
         eventsGood = Events(fileList[f][0])

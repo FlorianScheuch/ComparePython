@@ -16,3 +16,8 @@ class HOMuon:
     
     def pt(self):
         return self._pt
+    
+    def equals(self, otherMuon):
+        if self.pt() == otherMuon.pt() and self.phi() == otherMuon.phi() and self.eta() == otherMuon.eta():
+            return True
+        return False

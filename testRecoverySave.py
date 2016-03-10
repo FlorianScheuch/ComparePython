@@ -20,15 +20,15 @@ cmstools.ROOT.AutoLibraryLoader.enable()
 MAX_NUMBER = 1000 #Events per file
 stNum=1
 isGetHighestCandidate = 0
-download = False
+download = True
 stopped = 0
 fileList = []
-startNumber = 1
+startNumber = 163
 currentEndNumber = startNumber-1
 endNumber = 200
 
 for i in range(startNumber, endNumber+1): # 1,51 101
-    fileList.append(['dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/Working2/FEVT_WorkingDetector'+str(i)+'.root', 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/NonWorking2/FEVT_NonWorkingDetector'+str(i)+'.root'])
+    fileList.append(['FEVT_WorkingDetector'+str(i)+'.root', 'FEVT_NonWorkingDetector'+str(i)+'.root'])
 eventList = []
 
 
@@ -378,10 +378,6 @@ def analyze(deltaR, relPt, stNum, download):
     
     matchingJetEnergy = ROOT.TH1D("Matching Jet Energy", "Matching Jet Energy", 5000, 0, 5000)
     
-    realL1PtVsL1PtOAL1 = (ROOT.TH2D("Real L1 Pt vs L1 HO Pt OA binned to L1", "Real Pt vs L1 HO Pt OA binned to L1", 100, 0, 500, 100, 0, 500))
-    realL1PhiVsL1PhiOAL1 = (ROOT.TH2D("Real L1 Phi vs L1 HO Pt OA binned to L1", "Real Phi vs L1 HO Pt OA binned to L1", 100, -.5, .5, 100, -.5, .5))
-    realL1EtaVsL1EtaOAL1 = (ROOT.TH2D("Real L1 Eta vs L1 HO Pt OA binned to L1", "Real Eta vs L1 HO Pt OA binned to L1", 100, -.5, .5, 100, -.5, .5))
-    
     realL1PtVsL1PtOA = (ROOT.TH2D("Real L1 Pt vs L1 HO Pt OA", "Real Pt vs L1 HO Pt OA", 100, 0, 500, 100, 0, 500))
     realL1PtVsL1Pt = []
     realL1PtVsL1Pt.append(ROOT.TH2D("Real L1 Pt vs L1 HO Pt Code 0", "Real Pt vs L1 HO Pt code 0", 100, 0, 500, 100, 0, 500))
@@ -447,8 +443,6 @@ def analyze(deltaR, relPt, stNum, download):
     realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 5", "Real Eta vs L1 HO Pt Code 5", 100, -.5, .5, 100, -.5, .5))
     realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 6", "Real Eta vs L1 HO Pt Code 6", 100, -.5, .5, 100, -.5, .5))
     realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 7", "Real Eta vs L1 HO Pt Code 7", 100, -.5, .5, 100, -.5, .5))
-    
-    
     
     recoPositionOfMuons = ROOT.TH2D("Reco Position", "Reco Position", 100, -.5, .5, 628, -1.*math.pi, math.pi)
     genPositionsOfRecMuons = ROOT.TH2D("Gen Position of reconstructed muons", "Gen Position of reconstructed muons", 100, -.5, .5, 628, -1.*math.pi, math.pi)
@@ -602,28 +596,25 @@ def analyze(deltaR, relPt, stNum, download):
                             numberOfRecosWithBadL1Muon = numberOfRecosWithBadL1Muon + 1
                             continue
                         isRecEvent = True
-                        if not element[matchingGoodMuon] == None:
+			if not element[matchingGoodMuon] == None:
                             realL1PtVsL1PtOA.Fill(element[matchingGoodMuon].pt(), c.pt())
                             realL1PhiVsL1PhiOA.Fill(element[matchingGoodMuon].phi(), c.phi())
                             realL1EtaVsL1EtaOA.Fill(element[matchingGoodMuon].eta(), c.eta())
-                            realPtVsL1PtOA.Fill(element[recoMuon].pt(), c.pt())
-                            realPhiVsL1PhiOA.Fill(element[recoMuon].phi(), c.phi())
-                            realEtaVsL1EtaOA.Fill(element[recoMuon].eta(), c.eta())
-                            realPtVsL1PtOAL1.Fill(element[recoMuon].pt(), c.pt())
-                            realPhiVsL1PhiOAL1.Fill(element[recoMuon].phi(), c.phi())
-                            realEtaVsL1EtaOAL1.Fill(element[recoMuon].eta(), c.eta())
-                            if c.quality > -1:
-                                if not element[matchingGoodMuon] == None:
-                                    realL1PtVsL1Pt[c.quality].Fill(element[matchingGoodMuon].pt(), c.pt())
-                                    realL1PhiVsL1Phi[c.quality].Fill(element[matchingGoodMuon].phi(), c.phi())
-                                    realL1EtaVsL1Eta[c.quality].Fill(element[matchingGoodMuon].eta(), c.eta())
-                                    realPtVsL1Pt[c.quality].Fill(element[recoMuon].pt(), c.pt())
-                                    realPhiVsL1Phi[c.quality].Fill(element[recoMuon].phi(), c.phi())
-                                    realEtaVsL1Eta[c.quality].Fill(element[recoMuon].eta(), c.eta())
-                                    recoPositionOfMuons.Fill(c.eta(), c.phi())
-                                    if c.quality > 5:
-                                        correctCandidateEtaPhi.Fill(c.eta(), c.phi())
-                                        numberOfRecoveries = numberOfRecoveries + 1
+			realPtVsL1PtOA.Fill(element[recoMuon].pt(), c.pt())
+                        realPhiVsL1PhiOA.Fill(element[recoMuon].phi(), c.phi())
+                        realEtaVsL1EtaOA.Fill(element[recoMuon].eta(), c.eta())
+                        if c.quality > -1:
+			    if not element[matchingGoodMuon] == None:
+                                realL1PtVsL1Pt[c.quality].Fill(element[matchingGoodMuon].pt(), c.pt())
+                                realL1PhiVsL1Phi[c.quality].Fill(element[matchingGoodMuon].phi(), c.phi())
+                                realL1EtaVsL1Eta[c.quality].Fill(element[matchingGoodMuon].eta(), c.eta())
+			    realPtVsL1Pt[c.quality].Fill(element[recoMuon].pt(), c.pt())
+                            realPhiVsL1Phi[c.quality].Fill(element[recoMuon].phi(), c.phi())
+                            realEtaVsL1Eta[c.quality].Fill(element[recoMuon].eta(), c.eta())
+                        recoPositionOfMuons.Fill(c.eta(), c.phi())
+                        if c.quality > 5:
+                            correctCandidateEtaPhi.Fill(c.eta(), c.phi())
+                        numberOfRecoveries = numberOfRecoveries + 1
                         if not Utils.getMatch(c, goodL1Muons, .3, .5):
                             qualityCodesBad.Fill(c.quality)
                     if isRecEvent == True:
@@ -714,6 +705,6 @@ def analyze(deltaR, relPt, stNum, download):
     print 'Number of recovered muons that fit to L1 muon in bad sample: ', str(numberOfRecosWithBadL1Muon)
     save('Quality' + str(startNumber) + '_' + str(currentEndNumber) + '_' + str(numberOfFails) + '.root',realPtVsL1PtRecoNoL12D, correctCandidateEtaPhi, pdgIdOfMatchingParticle, wrongCandidateEtaPhi,matchingJetEnergy, hoOccupancy, qualityCodesRecoNoL1,realPtVsL1PtRecoNoL1,realPtVsL1PtOA,realPhiVsL1PhiOA,realEtaVsL1EtaOA, realPhiVsL1PhiRecoNoL1, realEtaVsL1EtaRecoNoL1, qualityCodesWrongRecovered,realPtVsL1PtWrongRecovered,realPhiVsL1PhiWrongRecovered,realEtaVsL1EtaWrongRecovered, qualityCodes, realPtVsL1Pt[0], realPtVsL1Pt[1], realPtVsL1Pt[2], realPtVsL1Pt[3], realPtVsL1Pt[4], realPtVsL1Pt[5], realPtVsL1Pt[6], realPtVsL1Pt[7], qualityCodes2d, realPhiVsL1Phi[0], realPhiVsL1Phi[1], realPhiVsL1Phi[2], realPhiVsL1Phi[3], realPhiVsL1Phi[4], realPhiVsL1Phi[5], realPhiVsL1Phi[6], realPhiVsL1Phi[7], genPositionsOfRecMuons, realEtaVsL1Eta[0], realEtaVsL1Eta[1], realEtaVsL1Eta[2], realEtaVsL1Eta[3], realEtaVsL1Eta[4], realEtaVsL1Eta[5], realEtaVsL1Eta[6], realEtaVsL1Eta[7], recoPositionOfMuons, qualityCodes2dWrong, qualityCodesWrong, realPtVsL1PtWrong, realPhiVsL1PhiWrong, realEtaVsL1EtaWrong, qualityCodesBad, realL1PtVsL1PtOA, realL1PhiVsL1PhiOA, realL1EtaVsL1EtaOA, realL1PtVsL1Pt[0], realL1PtVsL1Pt[1], realL1PtVsL1Pt[2], realL1PtVsL1Pt[3], realL1PtVsL1Pt[4], realL1PtVsL1Pt[5], realL1PtVsL1Pt[6], realL1PtVsL1Pt[7], realL1PhiVsL1Phi[0], realL1PhiVsL1Phi[1], realL1PhiVsL1Phi[2], realL1PhiVsL1Phi[3], realL1PhiVsL1Phi[4], realL1PhiVsL1Phi[5], realL1PhiVsL1Phi[6], realL1PhiVsL1Phi[7], realL1EtaVsL1Eta[0], realL1EtaVsL1Eta[1], realL1EtaVsL1Eta[2], realL1EtaVsL1Eta[3], realL1EtaVsL1Eta[4], realL1EtaVsL1Eta[5], realL1EtaVsL1Eta[6], realL1EtaVsL1Eta[7])
 #for i in xrange(100):
-analyze(.2, .5, 1, 0)
+analyze(.2, .5, 1, 1)
 
 #save('Data.root', deltaZ)

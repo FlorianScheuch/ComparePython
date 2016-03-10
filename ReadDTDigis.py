@@ -177,7 +177,7 @@ def analyze(deltaR, relPt):
                 iphiVsPos4.Fill(Utils.getTrigPos(d), id.iphi())
                 if highestHoEntry.energy() > .2:
                     iphiVsAngle4Threshold.Fill(Utils.getTrigDir(d), id.iphi())
-                    iphiVsPos4Threshold.Fill(Utils.getTrigPos(d), id.iphi())    
+                    iphiVsPos4Threshold.Fill(Utils.getTrigPos(d), id.iphi())
         
 
 

@@ -35,7 +35,7 @@ class Utils:
         #2**.5*math.pi/36:i
         #print 'NoMatch'
             return 
-        if abs((muon1.pt()-minMuon.pt())/(minMuon.pt()+muon1.pt())) > relPt:
+        if (minMuon.pt()-muon1.pt())/(minMuon.pt()+muon1.pt()) > relPt:
             #print 'NoMatch'
             return
         return minMuon
@@ -45,7 +45,7 @@ class Utils:
         minRNow = 1000
         particle = None
         for element in jetList:
-            if Utils.getDistance(muon, element) < minR and Utils.getDistance(muon, element) < minRNow and element.pt() > 5:
+            if Utils.getDistance(muon, element) < minR and Utils.getDistance(muon, element) < minRNow and element.pt() > 4:
                 minRNow = Utils.getDistance(muon, element)
                 particle = element
         if minRNow < 1000:
