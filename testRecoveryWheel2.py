@@ -24,7 +24,7 @@ isGetHighestCandidate = 0
 download = False
 stopped = 0
 fileList = []
-startNumber = 35
+startNumber = 1
 currentEndNumber = startNumber-1
 endNumber = 100
 
@@ -35,7 +35,7 @@ currentEndNumber = startNumber-1
 
 for i in range(startNumber, endNumber+1): # 1,51 101
 #    fileList.append(['dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/Working2/FEVT_WorkingDetector'+str(i)+'.root', 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/FailureSamples/NonWorking2/FEVT_NonWorkingDetector'+str(i)+'.root'])
-    fileList.append(['dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/Analysis/Wheel0/Working/Working'+str(i)+'.root', 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/Analysis/Wheel0/Station2/NonWorking'+str(i)+'.root'])
+    fileList.append(['dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/Analysis/Wheel2M/Working/Working'+str(i)+'.root', 'dcap://grid-dcap-extern.physik.rwth-aachen.de/pnfs/physik.rwth-aachen.de/cms/store/user/fscheuch/Analysis/Wheel2M/Station2/NonWorking'+str(i)+'.root'])
 eventList = []
 
 
@@ -121,24 +121,24 @@ def printDigis(phDigi, thDigi):
     for d in phDigi:
         sc = d.scNum()+1
         #print str(d.stNum()), ' ', str(d.scNum()), ' ', str(d.whNum())
-        if d.stNum() == 1 and sc == 1 and d.whNum() == 0:
+        if d.stNum() == 1 and sc == 1 and d.whNum() == -2:
 #             print 'Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
-        if d.stNum() == 1 and sc == 12 and d.whNum() == 0:
+        if d.stNum() == 1 and sc == 12 and d.whNum() == -2:
 #             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
-        if d.stNum() == 1 and sc == 2 and d.whNum() == 0:
+        if d.stNum() == 1 and sc == 2 and d.whNum() == -2:
 #             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
+        #if d.stNum() == 1 and sc == 1 and d.whNum() == -1:
+#             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+         #   printed = True
         if d.stNum() == 1 and sc == 1 and d.whNum() == -1:
-#             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
-            printed = True
-        if d.stNum() == 1 and sc == 1 and d.whNum() == 1:
 #             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
     for d in thDigi:
         sc = d.scNum()+1
-        if d.stNum() == 1 and sc == 1 and d.whNum() == 0:
+        if d.stNum() == 1 and sc == 1 and d.whNum() == -2:
             for pos in xrange(8):
                 if d.position(pos) > 0:
 #                     print 'Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' pos: ', pos
@@ -150,24 +150,24 @@ def printDigisTruely(phDigi, thDigi):
     for d in phDigi:
         sc = d.scNum()+1
         print str(d.stNum()), ' ', str(d.scNum()), ' ', str(d.whNum())
-        if d.stNum() == 1 and sc == 1 and d.whNum() == 0:
+        if d.stNum() == 1 and sc == 1 and d.whNum() == -2:
             print 'Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
-        if d.stNum() == 1 and sc == 12 and d.whNum() == 0:
+        if d.stNum() == 1 and sc == 12 and d.whNum() == -2:
             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
-        if d.stNum() == 1 and sc == 2 and d.whNum() == 0:
+        if d.stNum() == 1 and sc == 2 and d.whNum() == -2:
             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
+        #if d.stNum() == 1 and sc == 1 and d.whNum() == -1:
+        #    print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
+        #    printed = True
         if d.stNum() == 1 and sc == 1 and d.whNum() == -1:
-            print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
-            printed = True
-        if d.stNum() == 1 and sc == 1 and d.whNum() == 1:
             print '####!!!!#### Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' phi: ', d.phi(), 'phiB: ', d.phiB()
             printed = True
     for d in thDigi:
         sc = d.scNum()+1
-        if d.stNum() == 1 and sc == 1 and d.whNum() == 0:
+        if d.stNum() == 1 and sc == 1 and d.whNum() == -2:
             for pos in xrange(8):
                 if d.position(pos) > 0:
                     print 'Station: ', d.stNum(), ' Sector: ', sc, ' Wheel: ', d.whNum(), ' pos: ', pos
@@ -202,11 +202,13 @@ def matchesHO(phDigi, thDigi, hoEntries, qualityCodes2d): #DONE
         ieta = -19
         for pos in xrange(8):
             if thDigi.code(pos) > 0:
-                if thDigi.whNum() == 0 and thSc == 1 and thDigi.stNum() == 1:
+                if thDigi.whNum() == -2 and thSc == 1 and thDigi.stNum() == 1:
                     if thDigi.whNum() == -2 or thDigi.whNum() == -1 or ( thDigi.whNum() == 0 and (thDigi.scNum() == 0 or thDigi.scNum() == 3 or thDigi.scNum() == 4 or thDigi.scNum() == 7 or thDigi.scNum() == 8 or thDigi.scNum() == 11)):
                         pos = 6-pos
-                    ieta = pos - 3
-                    ieta = -1*ieta
+                    ieta = int(round((-5./7.)*(pos+1) - 10)) #ieta laeuft von -15 -- -1 (minus Seite) und 0 -- 14 (positive Seite)
+                    #print('Position: ' + str(pos) + ' ieta: ' + str(ieta))
+                    #ieta = pos - 3
+                    #ieta = -1*ieta
 
 #     print 'Muon expected at phi: ', str(iphi), ' eta: ', str(ieta) 
     highestReturnCode = -1
@@ -302,17 +304,17 @@ def getEtaFromDigi(thDigi): # More than one positive possible! Prepared to retur
                  pos = 6-pos
              if stNum == 1:
                  #print 'Pos: ', str(pos)
-                 etas.append(Utils.getEta(3.850, (.365714285*pos) - 1.097142858))
+                 etas.append(Utils.getEta(3.850, (-.382857142*pos) - 4.03)) # pos ist die position aus der MB eta!!!
                  return etas[0]
              if stNum == 2:
                  #print 'Pos: ', str(pos)
-                 etas.append(Utils.getEta(4.645, (.365714285*pos) - 1.097142858))
+                 etas.append(Utils.getEta(4.645, (-.382857142*pos) - 4.03))
                  return etas[0]
              if stNum == 3:
-                 etas.append(Utils.getEta(5.635, (.365714285*pos) - 1.097142858))
+                 etas.append(Utils.getEta(5.635, (-.382857142*pos) - 4.03))
                  return etas[0]
              if stNum == 4:
-                 etas.append(Utils.getEta(6.920, (.365714285*pos) - 1.097142858))
+                 etas.append(Utils.getEta(6.920, (-.382857142*pos) - 4.03))
                  return etas[0]
     return 0
              
@@ -330,7 +332,7 @@ def getMuonCandidates(phDigi, thDigi, hoEntries, qualityCodes2d, stNum): #DONE
         if dP.scNum()+1 != 1:
 #             print 'Sector is ', str(dP.scNum()), ' ... continue'
             continue
-        if dP.whNum() != 0:
+        if dP.whNum() != -2:
 #             print 'Wheel is ', str(dP.whNum()), ' ... continue'
             continue
         if dP.bxNum() != 0:
@@ -346,7 +348,7 @@ def getMuonCandidates(phDigi, thDigi, hoEntries, qualityCodes2d, stNum): #DONE
                 hasThDigi = True
                 quality = matchesHO(dP, dT, hoEntries, qualityCodes2d)
                 if quality >= 0:
-                        candidates.append(HOMuon(-1.*getEtaFromDigi(dT), getPhiFromDigi(dP), Utils.getPtFromDigi(dP), quality))
+                        candidates.append(HOMuon(getEtaFromDigi(dT), getPhiFromDigi(dP), Utils.getPtFromDigi(dP), quality))
         if hasThDigi == False:
             quality = matchesHO(dP, None, hoEntries, qualityCodes2d)
             if quality >= 0:
@@ -387,7 +389,7 @@ def analyze(deltaR, relPt, stNum, download):
     
     realL1PtVsL1PtOAL1 = (ROOT.TH2D("Real L1 Pt vs L1 HO Pt OA binned to L1", "Real Pt vs L1 HO Pt OA binned to L1", 100, 0, 500, 100, 0, 500))
     realL1PhiVsL1PhiOAL1 = (ROOT.TH2D("Real L1 Phi vs L1 HO Pt OA binned to L1", "Real Phi vs L1 HO Pt OA binned to L1", 100, -.5, .5, 100, -.5, .5))
-    realL1EtaVsL1EtaOAL1 = (ROOT.TH2D("Real L1 Eta vs L1 HO Pt OA binned to L1", "Real Eta vs L1 HO Pt OA binned to L1", 100, -.5, .5, 100, -.5, .5))
+    realL1EtaVsL1EtaOAL1 = (ROOT.TH2D("Real L1 Eta vs L1 HO Pt OA binned to L1", "Real Eta vs L1 HO Pt OA binned to L1", 300, -1.5, 1.5, 300, -1.5, 1.5))
     
     realL1PtVsL1PtOA = (ROOT.TH2D("Real L1 Pt vs L1 HO Pt OA", "Real Pt vs L1 HO Pt OA", 100, 0, 500, 100, 0, 500))
     realL1PtVsL1Pt = []
@@ -411,16 +413,16 @@ def analyze(deltaR, relPt, stNum, download):
     realL1PhiVsL1Phi.append(ROOT.TH2D("Real L1 Phi vs L1 HO Pt Code 6", "Real Phi vs L1 HO Pt Code 6", 100, -.5, .5, 100, -.5, .5))
     realL1PhiVsL1Phi.append(ROOT.TH2D("Real L1 Phi vs L1 HO Pt Code 7", "Real Phi vs L1 HO Pt Code 7", 100, -.5, .5, 100, -.5, .5))
     
-    realL1EtaVsL1EtaOA = (ROOT.TH2D("Real L1 Eta vs L1 HO Pt OA", "Real Eta vs L1 HO Pt OA", 100, -.5, .5, 100, -.5, .5))
+    realL1EtaVsL1EtaOA = (ROOT.TH2D("Real L1 Eta vs L1 HO Pt OA", "Real Eta vs L1 HO Pt OA", 300, -1.5, 1.5, 300, -1.5, 1.5))
     realL1EtaVsL1Eta = []
-    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 0", "Real Eta vs L1 HO Pt Code 0", 100, -.5, .5, 100, -.5, .5))
-    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 1", "Real Eta vs L1 HO Pt Code 1", 100, -.5, .5, 100, -.5, .5))
-    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 2", "Real Eta vs L1 HO Pt Code 2", 100, -.5, .5, 100, -.5, .5))
-    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 3", "Real Eta vs L1 HO Pt Code 3", 100, -.5, .5, 100, -.5, .5))
-    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 4", "Real Eta vs L1 HO Pt Code 4", 100, -.5, .5, 100, -.5, .5))
-    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 5", "Real Eta vs L1 HO Pt Code 5", 100, -.5, .5, 100, -.5, .5))
-    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 6", "Real Eta vs L1 HO Pt Code 6", 100, -.5, .5, 100, -.5, .5))
-    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 7", "Real Eta vs L1 HO Pt Code 7", 100, -.5, .5, 100, -.5, .5))
+    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 0", "Real Eta vs L1 HO Pt Code 0", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 1", "Real Eta vs L1 HO Pt Code 1", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 2", "Real Eta vs L1 HO Pt Code 2", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 3", "Real Eta vs L1 HO Pt Code 3", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 4", "Real Eta vs L1 HO Pt Code 4", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 5", "Real Eta vs L1 HO Pt Code 5", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 6", "Real Eta vs L1 HO Pt Code 6", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realL1EtaVsL1Eta.append(ROOT.TH2D("Real L1 Eta vs L1 HO Pt Code 7", "Real Eta vs L1 HO Pt Code 7", 300, -1.5, 1.5, 300, -1.5, 1.5))
     
     realPtVsL1PtOA = (ROOT.TH2D("Real Pt vs L1 HO Pt OA", "Real Pt vs L1 HO Pt OA", 100, 0, 500, 100, 0, 500))
     realPtVsL1Pt = []
@@ -444,16 +446,16 @@ def analyze(deltaR, relPt, stNum, download):
     realPhiVsL1Phi.append(ROOT.TH2D("Real Phi vs L1 HO Pt Code 6", "Real Phi vs L1 HO Pt Code 6", 100, -.5, .5, 100, -.5, .5))
     realPhiVsL1Phi.append(ROOT.TH2D("Real Phi vs L1 HO Pt Code 7", "Real Phi vs L1 HO Pt Code 7", 100, -.5, .5, 100, -.5, .5))
     
-    realEtaVsL1EtaOA = (ROOT.TH2D("Real Eta vs L1 HO Pt OA", "Real Eta vs L1 HO Pt OA", 100, -.5, .5, 100, -.5, .5))
+    realEtaVsL1EtaOA = (ROOT.TH2D("Real Eta vs L1 HO Pt OA", "Real Eta vs L1 HO Pt OA", 300, -1.5, 1.5, 300, -1.5, 1.5))
     realEtaVsL1Eta = []
-    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 0", "Real Eta vs L1 HO Pt Code 0", 100, -.5, .5, 100, -.5, .5))
-    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 1", "Real Eta vs L1 HO Pt Code 1", 100, -.5, .5, 100, -.5, .5))
-    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 2", "Real Eta vs L1 HO Pt Code 2", 100, -.5, .5, 100, -.5, .5))
-    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 3", "Real Eta vs L1 HO Pt Code 3", 100, -.5, .5, 100, -.5, .5))
-    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 4", "Real Eta vs L1 HO Pt Code 4", 100, -.5, .5, 100, -.5, .5))
-    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 5", "Real Eta vs L1 HO Pt Code 5", 100, -.5, .5, 100, -.5, .5))
-    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 6", "Real Eta vs L1 HO Pt Code 6", 100, -.5, .5, 100, -.5, .5))
-    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 7", "Real Eta vs L1 HO Pt Code 7", 100, -.5, .5, 100, -.5, .5))
+    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 0", "Real Eta vs L1 HO Pt Code 0", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 1", "Real Eta vs L1 HO Pt Code 1", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 2", "Real Eta vs L1 HO Pt Code 2", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 3", "Real Eta vs L1 HO Pt Code 3", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 4", "Real Eta vs L1 HO Pt Code 4", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 5", "Real Eta vs L1 HO Pt Code 5", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 6", "Real Eta vs L1 HO Pt Code 6", 300, -1.5, 1.5, 300, -1.5, 1.5))
+    realEtaVsL1Eta.append(ROOT.TH2D("Real Eta vs L1 HO Pt Code 7", "Real Eta vs L1 HO Pt Code 7", 300, -1.5, 1.5, 300, -1.5, 1.5))
     
     
     
@@ -590,7 +592,7 @@ def analyze(deltaR, relPt, stNum, download):
                 element = l1MuonTuple[j]
                 if not element[matchingGoodMuon] == None:
                     if element[matchingBadMuon] == None:
-                        if abs(element[recoMuon].eta()) < Utils.getEta(3.85, 1.28):
+                        if abs(element[recoMuon].eta()) > Utils.getEta(3.85, 4.03) and abs(element[recoMuon].eta()) < Utils.getEta(3.85, 6.71): ###Hier muss der eta bereich eingegerenzt werden
                             if element[recoMuon].phi() >= -10.*math.pi/180. and element[recoMuon].phi() < 20./180.*math.pi:
                                 numberOfFails = numberOfFails + 1
                                 failEvent = True
@@ -598,6 +600,7 @@ def analyze(deltaR, relPt, stNum, download):
             if failEvent == True:
                 if printDigis(phiDigis, thDigis):
                     candidates = getMuonCandidates(phiDigis, thDigis, badHoEntries, qualityCodes2d, stNum)
+                    print('Candidates: ' + str(len(candidates)))
                     isRecEvent = False
                     for c in candidates:
 #                         c.printInfo()
@@ -640,7 +643,7 @@ def analyze(deltaR, relPt, stNum, download):
 #                                 print 'Event ' + str(i) + ', RECO (gen), pT: ', str(element[recoMuon].pt()), ' eta: ', str(element[recoMuon].eta()), 'phi ', str(element[recoMuon].phi())
                                 
 #                                     print '--------------------------- '
-            else:
+            else: #No Fail event!
                 if printDigis(phiDigis, thDigis):
                     candidates = getMuonCandidates(phiDigis, thDigis, badHoEntries, qualityCodes2dWrong, stNum) #change plots!
                     pT = 0

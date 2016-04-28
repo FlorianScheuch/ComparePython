@@ -1,7 +1,53 @@
 import math
+import ROOT
 #from colorama import init, Fore, Back, Style
 
 class Utils:
+        
+        
+    @staticmethod
+    def toL1Pt(pT):
+        if pT <= 8:
+            return pT
+        if pT <= 10:
+            return 10
+        if pT <= 12:
+            return 12
+        if pT <= 14:
+            return 14
+        if pT <= 16:
+            return 16
+        if pT <= 18:
+            return 18
+        if pT <= 20:
+            return 20
+        if pT <= 25:
+            return 25
+        if pT <= 30:
+            return 30
+        if pT <= 35:
+            return 35
+        if pT <= 40:
+            return 40
+        if pT <= 45:
+            return 45
+        if pT <= 50:
+            return 50
+        if pT <= 60:
+            return 60
+        if pT <= 70:
+            return 70
+        if pT <= 80:
+            return 80
+        if pT <= 90:
+            return 90
+        if pT <= 100:
+            return 100
+        if pT <= 120:
+            return 120
+        return 140
+        
+    
     @staticmethod
     def getEta(z, r):
 #         print 'z: ', str(z), ' r: ', str(r)
@@ -212,6 +258,13 @@ class Utils:
         if trig.whNum() > 0 or trig.scNum()%4>1:
             return True
         return False
+    
+    @staticmethod
+    def save(name, *plot):
+        file = ROOT.TFile(name, 'RECREATE')
+        for x in plot:
+            x.Write()
+        file.Close()
     
     @staticmethod
     def getTrigDir(trig):
